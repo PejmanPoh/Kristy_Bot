@@ -5,9 +5,9 @@ import java.util.concurrent.Executors;
 
 /**
  * A simple multi-threaded task engine
- * @author Xspeed
+ * @author XspeedPL
  */
-final class Scheduler extends Thread implements AutoCloseable
+public final class Scheduler extends Thread implements AutoCloseable
 {
 	private final LinkedList<Task> tasks;
 	private final ExecutorService exs;
@@ -31,7 +31,7 @@ final class Scheduler extends Thread implements AutoCloseable
 				Thread.sleep(500);
 				for (final Task t : tasks)
 				{
-					t.tick();
+					if (t.tick()) exs.execute(t);
 					if (t.isCompleted()) completed.add(t);
 				}
 				for (final Task t : completed) tasks.remove(t);
@@ -44,13 +44,11 @@ final class Scheduler extends Thread implements AutoCloseable
 	
 	/**
 	 * Add a task to the queue
-	 * @param r The task to execute
-	 * @param time Delay in 500ms time units
+	 * @param t The task to execute
 	 * @return An unique task ID
 	 */
-	public final long addTask(final Runnable r, final int time)
+	public final long addTask(final Task t)
 	{
-		final Task t = new Task(r, time);
 		tasks.add(t);
 		return t.ID;
 	}
@@ -80,37 +78,67 @@ final class Scheduler extends Thread implements AutoCloseable
 		exs.shutdown();
 	}
 	
-	private final class Task implements Runnable
+	public static abstract class Task implements Runnable
 	{
-		private final long ID;
-		private final Runnable task;
+		/** The unique task ID */
+		public final long ID;
+		
 		private boolean started, completed;
 		private int timeleft;
 		
-		Task(final Runnable r, final int time)
+		/**
+	     * @param time Delay in 500ms time units
+		 */
+		public Task(final int time)
 		{
 			ID = MyBot.rand.nextLong();
 			timeleft = time;
-			task = r;
 		}
 		
+		/**
+		 * Internal use only
+		 */
 		@Override
-		public final void run()
+		public void run()
 		{
-			task.run();
-			completed = true;
+			main();
+			if (timeleft < 1) completed = true;
 		}
 		
-		final void tick()
+		/**
+		 * Scheduled tasks's code
+		 */
+		public abstract void main();
+		
+		/**
+		 * Instruct a task to run again
+		 * @param time Delay in 500ms time units
+		 */
+		public final void reschedule(final int time)
+		{
+			timeleft = time;
+			started = false;
+		}
+		
+		/**
+		 * Takes care of the countdown to the start of the task
+		 * @return True if the task should be started, false otherwise
+		 */
+		private final boolean tick()
 		{
 			if (timeleft > 1) --timeleft;
 			else if (!started)
 			{
 				started = true;
-				exs.execute(this);
+				return true;
 			}
+			return false;
 		}
 		
-		final boolean isCompleted() { return completed; }
+		/**
+		 * Checks whenever this task has finished and hasn't been rescheduled
+		 * @return True if the task is going to be removed, false otherwise
+		 */
+		public final boolean isCompleted() { return completed; }
 	}
 }

@@ -2,12 +2,9 @@ import org.jibble.pircbot.Colors;
 import org.jibble.pircbot.PircBot;
 import org.jibble.pircbot.User;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.LocalTime;
 import java.util.*;
@@ -17,77 +14,84 @@ public class MyBot extends PircBot
 	/** A static main class instance */
 	public static MyBot instance;
 	
+	/** A static random number generator instance */
 	public static final Random rand = new Random();
+	
+	/** A task scheduler instance */
+	private final Scheduler sched;
+	
+	private long randMsgTask, giveAwayTask, monitorTask;
+	
 	private Monitor mon = new Monitor();
-	private MessageThread mt = new MessageThread();
-	private Giveaway gy = new Giveaway();
 	private String giveawayWinner = null;
 	private int giveawayWinnerHashCode = 0;
 	private LocalTime giveawayTime = null;
 	private Boolean giveawayWinnerAccepted = false;
 
-	public MyBot(String name)
+	public MyBot(final String name)
 	{
 		instance = this;
+		sched = new Scheduler();
 		
-		// start threads
-		mt.start();
-		mon.start();
-
-		this.setName(name);
-		mon.setOnEmailReceivedEventHandler(() ->
-		{
-			sendMessage("#kristyboibets", Colors.RED + "***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
-			sendMessage("ThePageMan", Colors.RED + "***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
-		});
-
-		List<String> sentences = new LinkedList<String>();
+		final List<String> sentences = new LinkedList<String>();
 		sentences.add("Remember to drink your ovaltine kids.");
 		sentences.add("Remember to vote Kristy_Bot for Member of the Month!");
 		sentences.add("Rage betting is for losers.");
 		sentences.add("Beware the tilt.");
 		sentences.add("Beware the svv@y.");
 		sentences.add("Type !commands into chat to see the bot's commands.");
-
-		mt.setSendAdvert(() ->
+		
+		randMsgTask = sched.addTask(new Scheduler.Task(3600)
 		{
-			sendMessage("#kristyboibets", Colors.BROWN + sentences.get(rand.nextInt(sentences.size())));
+			@Override
+			public final void main()
+			{
+				sendMessage("#kristyboibets", Colors.BROWN + sentences.get(rand.nextInt(sentences.size())));
+				reschedule(3600);
+			}
 		});
+		
+		monitorTask = sched.addTask(mon);
+		
+		setName(name);
 
-		Timer timer = new Timer();
 		Calendar date = Calendar.getInstance();
 		// date.set(Calendar.DAY_OF_WEEK, Calendar.TUESDAY);
+		if (date.get(Calendar.HOUR_OF_DAY) > 18) date.add(Calendar.DAY_OF_MONTH, 1);
 		date.set(Calendar.HOUR_OF_DAY, 18);
 		date.set(Calendar.MINUTE, 30);
 		date.set(Calendar.SECOND, 0);
 		date.set(Calendar.MILLISECOND, 0);
-		timer.schedule(gy, date.getTime());
 
-		gy.setSendGiveaway(() ->
+		giveAwayTask = sched.addTask(new Scheduler.Task((int)((date.getTimeInMillis() - System.currentTimeMillis()) / 500))
 		{
-			// Randomuser is a user chosen randomly from the online users
-			User Randomuser = getRandomUser();
-			giveawayWinner = Randomuser.getNick();
-			giveawayWinnerHashCode = Randomuser.hashCode();
-			giveawayTime = LocalTime.now();
-			ResetGiveawayWinner rgw = new ResetGiveawayWinner(giveawayTime);
-			rgw.start();
-
-			System.out.println("Giveaway winner chosen");
-			// Sends the message to the IRC announcing the winner
-			sendMessage("#kristyboibets", Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.NORMAL + Colors.PURPLE + Randomuser.getNick() + Colors.RED + "! You have been randomly selected to win an " + Colors.PURPLE + "AK-47 | Redline FT" + Colors.RED + "! Type \"!accept\" in the next" + Colors.BLUE + " 30 minutes" + Colors.RED + " to claim your prize or another winner will be chosen.");
-
-			rgw.ResetWinnerFunction(() ->
+			@Override
+			public final void main()
 			{
-				if (giveawayWinnerAccepted)
+				final Scheduler.Task giveawayTask = this;
+				final User winner = getRandomUser();
+				giveawayWinner = winner.getNick();
+				giveawayWinnerHashCode = winner.hashCode();
+				giveawayTime = LocalTime.now();
+				System.out.println("Giveaway winner chosen: " + giveawayWinner);
+				sendMessage("#kristyboibets", Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.NORMAL + Colors.PURPLE + winner.getNick() + Colors.RED + "! You have been randomly selected to win an " + Colors.PURPLE + "AK-47 | Redline FT" + Colors.RED + "! Type \"!accept\" in the next" + Colors.BLUE + " 30 minutes" + Colors.RED + " to claim your prize or another winner will be chosen.");
+				sched.addTask(new Scheduler.Task(3600)
 				{
-					giveawayWinnerAccepted = false;
-				}
-				else
-				{
-					sendMessage("#kristyboibets", Colors.RED + "As " + Colors.PURPLE + Randomuser.getNick() + Colors.RED + " has not collected their prize, a new winner will be chosen later.");
-				}
-			});
+					@Override
+					public final void main()
+					{
+						if (giveawayWinnerAccepted) giveawayWinnerAccepted = false;
+						else
+						{
+							sendMessage("#kristyboibets", Colors.RED + "As " + Colors.PURPLE + winner.getNick() + Colors.RED + " has not collected their prize, a new winner will be chosen soon.");
+							// Pick another user in 25-50 seconds, will override the reschedule below
+							giveawayTask.reschedule(50 + rand.nextInt(50));
+						}
+					}
+				});
+				// Pick another user in 20-28 hours
+				reschedule(144000 + rand.nextInt(57600));
+			}
 		});
 	}
 
@@ -100,14 +104,13 @@ public class MyBot extends PircBot
 			case ("!accept"):
 				if (sender.equals(giveawayWinner) && (localTime.isBefore(giveawayTime.plusMinutes(30))) && !giveawayWinnerAccepted)
 				{
-
 					giveawayWinnerAccepted = true;
 
 					sendMessage(channel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + giveawayWinner + Colors.RED + "! Follow the instructions on the steam group page or type \"!IWON\" to find out how to collect your prize!");
 					// Sends the email to me with info of the winner
-					mon.SendGiveawayWinnerEmail(giveawayWinner, giveawayWinnerHashCode);
-				} // Maybe create a new !command to find out what to do when you
-					// win a giveaway.
+					mon.sendGiveawayWinnerEmail(giveawayWinner, giveawayWinnerHashCode);
+				}
+			    // Maybe create a new !command to find out what to do when you win a giveaway.
 				break;
 
 			case ("!time"):
@@ -219,6 +222,7 @@ public class MyBot extends PircBot
 
 	}
 
+	@Override
 	protected void onPrivateMessage(String sender, String login, String hostname, String message)
 	{
 
@@ -347,6 +351,7 @@ public class MyBot extends PircBot
 		}
 	}
 
+	@Override
 	protected void onJoin(String channel, String sender, String login, String hostname)
 	{
 		// ban(channel,hostname);
@@ -379,10 +384,9 @@ public class MyBot extends PircBot
 	//
 	// unBan("#kristyboibets",sourceHostname);
 	// }
-
-	protected void onOP(String channel, String sender, String login, String hostname)
+	
+	protected final void onOP(String channel, String sender, String login, String hostname)
 	{
-
 		List<String> sentences = new LinkedList<String>();
 		sentences.add("ALL RISE! Kristyboi has identified himself to the channel.");
 		sentences.add("Kristyboi 3 Confirmed.");
@@ -400,85 +404,33 @@ public class MyBot extends PircBot
 		}
 	}
 
-	public void storeBannedList(ArrayList<String> bannedArrayList)
+	/**
+	 * Stores a list of banned hosts in a file, one per line
+	 * @param banned The list of banned hosts
+	 */
+	public final void storeBannedList(final List<String> banned)
 	{
-		Properties prop = new Properties();
-		OutputStream output = null;
-		String[] bannedArray = new String[bannedArrayList.size()];
-		String bannedString = "";
-
 		try
 		{
-
-			output = new FileOutputStream("bannedhosts.properties");
-			bannedArrayList.toArray(bannedArray);
-
-			for (int i = 0; i < bannedArray.length; i++)
-			{
-				bannedArray[i] = bannedArray[i] + ";";
-				bannedString += bannedArray[i];
-			}
-
-			// set the properties value
-			prop.setProperty("banned", bannedString);
-
-			// save properties to project root folder
-			prop.store(output, null);
-
+			Files.write(Paths.get("bannedhosts.txt"), banned);
 		}
-		catch (IOException io)
-		{
-			io.printStackTrace();
-		}
+		catch (final IOException ex) { ex.printStackTrace(); }
 	}
 
-	public ArrayList<String> loadBannedList()
+	public final List<String> loadBannedList()
 	{
-
-		Properties prop = new Properties();
-		InputStream input = null;
-		String bannedString = null;
-		ArrayList<String> bannedArrayList = new ArrayList<String>();
-
 		try
 		{
-			input = new FileInputStream("bannedhosts.properties");
+			return Files.readAllLines(Paths.get("bannedhosts.txt"));
 		}
-		catch (FileNotFoundException e)
-		{
-			e.printStackTrace();
-		}
-
-		try
-		{
-			prop.load(input);
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
-
-		bannedString = prop.getProperty("banned");
-
-		if (bannedString.equals(""))
-		{
-			return bannedArrayList;
-		}
-
-		String[] bannedList = bannedString.split(";");
-
-		for (int i = 0; i < bannedList.length; i++)
-		{
-			bannedArrayList.add(bannedList[i]);
-		}
-		return bannedArrayList;
-
+		catch (final IOException ex) { ex.printStackTrace(); }
+		return new ArrayList<String>();
 	}
 
 	/**
 	 * Returns a random online user that isn't an admin or a mod
 	 */
-	public User getRandomUser()
+	public final User getRandomUser()
 	{
 		final List<User> users = Arrays.asList(getUsers("#kristyboibets"));
 		for (int i = users.size() - 1; i >= 0; --i)

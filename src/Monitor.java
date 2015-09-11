@@ -1,6 +1,3 @@
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Properties;
@@ -16,12 +13,41 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
-public class Monitor extends Thread
+import org.jibble.pircbot.Colors;
+
+public class Monitor extends Scheduler.Task
 {
 	private Date lastUpdate;
 	private final Object monitor = new Object();
+	private Folder inbox = null;
+	
+	public Monitor()
+	{
+		super(2);
+		// Get a Session object
+		Session session = Session.getInstance(System.getProperties(), null);
+		// session.setDebug(true);
 
-	public Date getLastUpdate()
+		try
+		{
+			// Get a Store object
+			Store store = session.getStore("imaps");
+	
+			// Connect
+			store.connect("imap.gmail.com", Config.get("GMAIL"), Config.get("GMAILpw"));
+	
+			// Open a Folder
+			inbox = store.getFolder("Inbox");
+			if (inbox == null || !inbox.exists())
+			{
+				System.out.println("Invalid folder");
+				System.exit(1);
+			}
+		}
+		catch (final Exception ex) { ex.printStackTrace(); }
+	}
+	
+	public final Date getLastUpdate()
 	{
 		synchronized (monitor)
 		{
@@ -29,110 +55,52 @@ public class Monitor extends Thread
 		}
 	}
 
-	public void run()
+	@Override
+	public void main()
 	{
 		try
 		{
-			// Get a Session object
-			Session session = Session.getInstance(System.getProperties(), null);
-			// session.setDebug(true);
-
-			// Get a Store object
-			Store store = session.getStore("imaps");
-
-			// Connect
-			store.connect("imap.gmail.com", Config.get("GMAIL"), Config.get("GMAILpw"));
-
-			// Open a Folder
-			Folder folder = store.getFolder("Inbox");
-			if (folder == null || !folder.exists())
+			inbox.open(Folder.READ_WRITE);
+			Message[] msgs = inbox.getMessages();
+			int unreadMessageCount = inbox.getUnreadMessageCount();
+			if (unreadMessageCount > 0)
 			{
-				System.out.println("Invalid folder");
-				System.exit(1);
-			}
-
-			while (true)
-			{
-				try
+				for (int i = msgs.length - 1; i >= msgs.length - unreadMessageCount; i--)
 				{
-					folder.open(Folder.READ_WRITE);
-				}
-				catch (Exception e) { }
 
-				Message[] msgs = folder.getMessages();
-				int unreadMessageCount = folder.getUnreadMessageCount();
-				if (unreadMessageCount > 0)
-				{
-					for (int i = msgs.length - 1; i >= msgs.length - unreadMessageCount; i--)
+					// If spreadsheet is the right name, send the message
+					// and and sysout
+					if (msgs[i].getSubject().contains("\"September Spreadsheet\" was edited recently") && (msgs[i].isSet(Flag.SEEN) == false))
 					{
+						System.out.println("UPDATE DETECTED");
+						MyBot.instance.sendMessage("#kristyboibets", Colors.RED + "***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
+						MyBot.instance.sendMessage("ThePageMan", Colors.RED + "***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
+						msgs[i].setFlag(Flag.SEEN, true);
 
-						// If spreadsheet is the right name, send the message
-						// and and sysout
-						if (msgs[i].getSubject().contains("\"September Spreadsheet\" was edited recently") && (msgs[i].isSet(Flag.SEEN) == false))
+						// Delete the email
+						msgs[i].setFlag(Flag.DELETED, true);
+						inbox.close(true);
+						inbox.open(Folder.READ_WRITE);
+
+						synchronized (monitor)
 						{
-							System.out.println("UPDATE DETECTED");
-							if (onEmailReceivedEventHandler != null)
-							{
-								onEmailReceivedEventHandler.handle();
-							}
-							msgs[i].setFlag(Flag.SEEN, true);
-
-							// Delete the email
-							msgs[i].setFlag(Flag.DELETED, true);
-							folder.close(true);
-							folder.open(Folder.READ_WRITE);
-
-							synchronized (monitor)
-							{
-								this.lastUpdate = msgs[i].getSentDate();
-							}
+							lastUpdate = msgs[i].getSentDate();
 						}
 					}
 				}
-				System.out.println(LocalDateTime.now() + " Email checked");
-				Thread.sleep(45000);
 			}
-
+			System.out.println(LocalDateTime.now() + " Email checked");
 		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
+		catch (final Exception ex) { ex.printStackTrace(); }
+		reschedule(90);
 	}
 
-	public interface OnEmailReceivedEventHandler
+	public final void sendGiveawayWinnerEmail(String winnerName, int winnerHashCode)
 	{
-		void handle();
-	}
+		final String username = Config.get("GMAIL");
+		final String password = Config.get("GMAILpw");
 
-	private OnEmailReceivedEventHandler onEmailReceivedEventHandler = null;
-
-	public void setOnEmailReceivedEventHandler(OnEmailReceivedEventHandler onEmailReceivedEventHandler)
-	{
-		this.onEmailReceivedEventHandler = onEmailReceivedEventHandler;
-	}
-
-	public void SendGiveawayWinnerEmail(String winnerName, int winnerHashCode)
-	{
-
-		Properties prop = new Properties();
-		try
-		{
-			prop.load(new FileInputStream("config.properties"));
-		}
-		catch (FileNotFoundException e)
-		{
-			e.printStackTrace();
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
-
-		final String username = prop.getProperty("GMAIL");
-		final String password = prop.getProperty("GMAILpw");
-
-		Properties props = new Properties();
+		final Properties props = new Properties();
 		props.put("mail.smtp.auth", "true");
 		props.put("mail.smtp.starttls.enable", "true");
 		props.put("mail.smtp.host", "smtp.gmail.com");
@@ -152,7 +120,7 @@ public class Monitor extends Thread
 			MimeMessage message = new MimeMessage(session);
 
 			// Set From: header field of the header.
-			message.setFrom(new InternetAddress(prop.getProperty("GMAIL")));
+			message.setFrom(new InternetAddress(username));
 
 			// Set To: header field of the header.
 			message.setRecipients(Message.RecipientType.TO, InternetAddress.parse("pejman.poh@gmail.com"));
