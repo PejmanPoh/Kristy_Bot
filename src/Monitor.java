@@ -1,4 +1,3 @@
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Properties;
 
@@ -24,14 +23,14 @@ final class Monitor extends Scheduler.Task
 	Monitor()
 	{
 		super(4);
-		Session session = Session.getInstance(System.getProperties(), null);
+		final Session session = Session.getInstance(System.getProperties(), null);
 		// session.setDebug(true);
 		try
 		{
-			Store store = session.getStore("imaps");
+			final Store store = session.getStore("imaps");
 			store.connect("imap.gmail.com", Config.get("GMAIL"), Config.get("GMAILpw"));
 			inbox = store.getFolder("Inbox");
-			if (inbox == null || !inbox.exists()) System.out.println("Invalid folder");
+			if (inbox == null || !inbox.exists()) Config.log("Error: Invalid folder");
 		}
 		catch (final Exception ex) { Config.log(ex); }
 	}
@@ -50,8 +49,9 @@ final class Monitor extends Scheduler.Task
 		try
 		{
 			inbox.open(Folder.READ_WRITE);
-			Message[] msgs = inbox.getMessages();
-			int unreadMessageCount = inbox.getUnreadMessageCount();
+			final Message[] msgs = inbox.getMessages();
+			final int unreadMessageCount = inbox.getUnreadMessageCount();
+			boolean send = true;
 			if (unreadMessageCount > 0)
 			{
 				for (int i = msgs.length - 1; i >= msgs.length - unreadMessageCount; i--)
@@ -59,9 +59,13 @@ final class Monitor extends Scheduler.Task
 					// If spreadsheet is the right name, send the message and and sysout
 					if (msgs[i].getSubject().contains("\"September Spreadsheet\" was edited recently") && !msgs[i].isSet(Flag.SEEN))
 					{
-						System.out.println("UPDATE DETECTED");
-						MyBot.instance.sendMessage("#kristyboibets", Colors.RED + "***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
-						MyBot.instance.sendMessage("ThePageMan", Colors.RED + "***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
+						Config.log("Spreadsheet update detected");
+						if (send)
+						{
+							// Prevent multiple announcments
+							send = false;
+							MyBot.instance.sendMessage("#kristyboibets", Colors.RED + "***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
+						}
 						msgs[i].setFlag(Flag.SEEN, true);
 
 						// Delete the email
@@ -76,7 +80,7 @@ final class Monitor extends Scheduler.Task
 					}
 				}
 			}
-			System.out.println(LocalDateTime.now() + " Email checked");
+			Config.log("Email checked");
 		}
 		catch (final Exception ex) { Config.log(ex); }
 		finally
@@ -115,7 +119,7 @@ final class Monitor extends Scheduler.Task
 			message.setText("Winner Nickname = " + winnerName + "\n\n Winner hashcode = " + winnerHashCode);
 
 			Transport.send(message);
-			Config.log("Sent email successfully...");
+			Config.log("Sent email successfully");
 		}
 		catch (final MessagingException ex) { Config.log(ex); }
 	}
