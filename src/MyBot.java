@@ -14,6 +14,10 @@ import java.util.*;
 
 public class MyBot extends PircBot
 {
+	/** A static main class instance */
+	public static MyBot instance;
+	
+	public static final Random rand = new Random();
 	private Monitor mon = new Monitor();
 	private MessageThread mt = new MessageThread();
 	private Giveaway gy = new Giveaway();
@@ -24,12 +28,15 @@ public class MyBot extends PircBot
 
 	public MyBot(String name)
 	{
+		instance = this;
+		
 		// start threads
 		mt.start();
 		mon.start();
 
 		this.setName(name);
-		mon.setOnEmailReceivedEventHandler(() -> {
+		mon.setOnEmailReceivedEventHandler(() ->
+		{
 			sendMessage("#kristyboibets", Colors.RED + "***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
 			sendMessage("ThePageMan", Colors.RED + "***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
 		});
@@ -42,8 +49,9 @@ public class MyBot extends PircBot
 		sentences.add("Beware the svv@y.");
 		sentences.add("Type !commands into chat to see the bot's commands.");
 
-		mt.setSendAdvert(() -> {
-			sendMessage("#kristyboibets", Colors.BROWN + sentences.get(GetRandomNumber(sentences.size())));
+		mt.setSendAdvert(() ->
+		{
+			sendMessage("#kristyboibets", Colors.BROWN + sentences.get(rand.nextInt(sentences.size())));
 		});
 
 		Timer timer = new Timer();
@@ -55,11 +63,10 @@ public class MyBot extends PircBot
 		date.set(Calendar.MILLISECOND, 0);
 		timer.schedule(gy, date.getTime());
 
-		gy.setSendGiveaway(() -> {
-			User[] users = getUsers("#kristyboibets");
-
+		gy.setSendGiveaway(() ->
+		{
 			// Randomuser is a user chosen randomly from the online users
-			User Randomuser = GetRandomUser(users);
+			User Randomuser = getRandomUser();
 			giveawayWinner = Randomuser.getNick();
 			giveawayWinnerHashCode = Randomuser.hashCode();
 			giveawayTime = LocalTime.now();
@@ -70,8 +77,9 @@ public class MyBot extends PircBot
 			// Sends the message to the IRC announcing the winner
 			sendMessage("#kristyboibets", Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.NORMAL + Colors.PURPLE + Randomuser.getNick() + Colors.RED + "! You have been randomly selected to win an " + Colors.PURPLE + "AK-47 | Redline FT" + Colors.RED + "! Type \"!accept\" in the next" + Colors.BLUE + " 30 minutes" + Colors.RED + " to claim your prize or another winner will be chosen.");
 
-			rgw.ResetWinnerFunction(() -> {
-				if (giveawayWinnerAccepted == true)
+			rgw.ResetWinnerFunction(() ->
+			{
+				if (giveawayWinnerAccepted)
 				{
 					giveawayWinnerAccepted = false;
 				}
@@ -85,14 +93,12 @@ public class MyBot extends PircBot
 
 	protected void onMessage(String channel, String sender, String login, String hostname, String message)
 	{
-
 		message = message.toLowerCase();
 		LocalTime localTime = LocalTime.now();
 		switch (message)
 		{
-
 			case ("!accept"):
-				if (sender.equals(giveawayWinner) && (localTime.isBefore(giveawayTime.plusMinutes(30))) && giveawayWinnerAccepted == false)
+				if (sender.equals(giveawayWinner) && (localTime.isBefore(giveawayTime.plusMinutes(30))) && !giveawayWinnerAccepted)
 				{
 
 					giveawayWinnerAccepted = true;
@@ -114,14 +120,6 @@ public class MyBot extends PircBot
 
 				sendMessage(channel, sender + ": The time is now " + sdf.format(currentTime));
 				sendMessage("ThePageMan", sender + ": The time is now " + sdf.format(currentTime));
-				try
-				{
-					Thread.sleep(2000);
-				}
-				catch (InterruptedException e)
-				{
-					e.printStackTrace();
-				}
 				break;
 
 			case ("!update"):
@@ -130,20 +128,9 @@ public class MyBot extends PircBot
 				{
 					sendMessage(channel, sender + ": " + mon.getLastUpdate().toString() + " was the last update.");
 				}
-				else
-					sendMessage(channel, "Sorry, couldn't detect most recent update.");
+				else sendMessage(channel, "Sorry, couldn't detect most recent update.");
 
 				sendMessage("ThePageMan", sender + ": !update");
-
-				try
-				{
-					Thread.sleep(2000);
-				}
-				catch (InterruptedException e)
-				{
-					e.printStackTrace();
-				}
-
 				break;
 
 			case ("!iwon"):
@@ -180,14 +167,6 @@ public class MyBot extends PircBot
 			case ("sup kristyboi"):
 				sendMessage(channel, "hi " + sender);
 				sendMessage("ThePageMan", sender + ": hi " + sender);
-				try
-				{
-					Thread.sleep(2000);
-				}
-				catch (InterruptedException e)
-				{
-					e.printStackTrace();
-				}
 				break;
 		}
 
@@ -221,17 +200,8 @@ public class MyBot extends PircBot
 		// What rank is kristy?
 		if ((message.contains("kristy") && message.toLowerCase().contains("rank")) || message.equalsIgnoreCase("!rank"))
 		{
-
 			sendMessage(channel, "Kristyboi is currently a Master Guardian Elite (MGE)");
 			sendMessage("ThePageMan", sender + ": Kristyboi is currently a Master Guardian Elite (MGE)");
-			try
-			{
-				Thread.sleep(2000);
-			}
-			catch (InterruptedException e)
-			{
-				e.printStackTrace();
-			}
 		}
 
 		// Bots are shit
@@ -239,14 +209,6 @@ public class MyBot extends PircBot
 		{
 			sendMessage(channel, ":(");
 			sendMessage("ThePageMan", sender + ": Bots are shit: :(");
-			try
-			{
-				Thread.sleep(2000);
-			}
-			catch (InterruptedException e)
-			{
-				e.printStackTrace();
-			}
 		}
 
 		// If my name is mentioned
@@ -433,8 +395,8 @@ public class MyBot extends PircBot
 
 		if (sender.equalsIgnoreCase("&Kristyboi"))
 		{
-			sendMessage(channel, Colors.DARK_GREEN + sentences.get(GetRandomNumber(sentences.size())));
-			sendMessage("ThePageMan", Colors.DARK_GREEN + sentences.get(GetRandomNumber(sentences.size())));
+			sendMessage(channel, Colors.DARK_GREEN + sentences.get(rand.nextInt(sentences.size())));
+			sendMessage("ThePageMan", Colors.DARK_GREEN + sentences.get(rand.nextInt(sentences.size())));
 		}
 	}
 
@@ -513,31 +475,22 @@ public class MyBot extends PircBot
 
 	}
 
-	// Chooses a random number from a given set
-	public int GetRandomNumber(int ArraySize)
+	/**
+	 * Returns a random online user that isn't an admin or a mod
+	 */
+	public User getRandomUser()
 	{
-		Random rand = new Random();
-		int choice = rand.nextInt(ArraySize);
-		return choice;
-
-	}
-
-	// Choose a random user that isn't the admins or bots
-	public User GetRandomUser(User[] users)
-	{
-		User ChosenUser = null;
-		while (ChosenUser == null)
+		final List<User> users = Arrays.asList(getUsers("#kristyboibets"));
+		for (int i = users.size() - 1; i >= 0; --i)
 		{
-
-			User randomUser = users[GetRandomNumber(users.length)];
-
-			while (!randomUser.getNick().equals("~ThePageMan") && !randomUser.getNick().equals("Kristy_Bot") && !randomUser.getNick().equals("&Warden") && !randomUser.getNick().equals("&Kristyboi") && !randomUser.getNick().equals("Kristyboi"))
+			final String pref = users.get(i).getPrefix();
+			// TODO: Only registered users?
+			if (!pref.equals("+"))
 			{
-				ChosenUser = randomUser;
-				return ChosenUser;
+				users.remove(i);
+				++i;
 			}
 		}
-		return ChosenUser;
-
+		return users.get(rand.nextInt(users.size()));
 	}
 }

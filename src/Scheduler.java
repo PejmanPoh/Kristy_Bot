@@ -1,3 +1,4 @@
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,10 +46,31 @@ final class Scheduler extends Thread implements AutoCloseable
 	 * Add a task to the queue
 	 * @param r The task to execute
 	 * @param time Delay in 500ms time units
+	 * @return An unique task ID
 	 */
-	public final void addTask(final Runnable r, final int time)
+	public final long addTask(final Runnable r, final int time)
 	{
-		tasks.add(new Task(r, time));
+		final Task t = new Task(r, time);
+		tasks.add(t);
+		return t.ID;
+	}
+	
+	/**
+	 * Cancel a queued task
+	 * @param id The ID of the task to be cancelled
+	 */
+	public final void cancelTask(final long id)
+	{
+		final Iterator<Task> li = tasks.iterator();
+		while (li.hasNext())
+		{
+			final Task t = li.next();
+			if (t.ID == id)
+			{
+				tasks.remove(t);
+				return;
+			}
+		}
 	}
 	
 	@Override
@@ -60,12 +82,14 @@ final class Scheduler extends Thread implements AutoCloseable
 	
 	private final class Task implements Runnable
 	{
+		private final long ID;
 		private final Runnable task;
 		private boolean started, completed;
 		private int timeleft;
 		
 		Task(final Runnable r, final int time)
 		{
+			ID = MyBot.rand.nextLong();
 			timeleft = time;
 			task = r;
 		}
