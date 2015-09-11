@@ -23,26 +23,15 @@ public class Monitor extends Scheduler.Task
 	
 	public Monitor()
 	{
-		super(2);
-		// Get a Session object
+		super(4);
 		Session session = Session.getInstance(System.getProperties(), null);
 		// session.setDebug(true);
-
 		try
 		{
-			// Get a Store object
 			Store store = session.getStore("imaps");
-	
-			// Connect
 			store.connect("imap.gmail.com", Config.get("GMAIL"), Config.get("GMAILpw"));
-	
-			// Open a Folder
 			inbox = store.getFolder("Inbox");
-			if (inbox == null || !inbox.exists())
-			{
-				System.out.println("Invalid folder");
-				System.exit(1);
-			}
+			if (inbox == null || !inbox.exists()) System.out.println("Invalid folder");
 		}
 		catch (final Exception ex) { ex.printStackTrace(); }
 	}
@@ -67,10 +56,8 @@ public class Monitor extends Scheduler.Task
 			{
 				for (int i = msgs.length - 1; i >= msgs.length - unreadMessageCount; i--)
 				{
-
-					// If spreadsheet is the right name, send the message
-					// and and sysout
-					if (msgs[i].getSubject().contains("\"September Spreadsheet\" was edited recently") && (msgs[i].isSet(Flag.SEEN) == false))
+					// If spreadsheet is the right name, send the message and and sysout
+					if (msgs[i].getSubject().contains("\"September Spreadsheet\" was edited recently") && !msgs[i].isSet(Flag.SEEN))
 					{
 						System.out.println("UPDATE DETECTED");
 						MyBot.instance.sendMessage("#kristyboibets", Colors.RED + "***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
@@ -92,6 +79,11 @@ public class Monitor extends Scheduler.Task
 			System.out.println(LocalDateTime.now() + " Email checked");
 		}
 		catch (final Exception ex) { ex.printStackTrace(); }
+		finally
+		{
+			try { inbox.close(true); }
+			catch (final MessagingException ex) { }
+		}
 		reschedule(90);
 	}
 
@@ -133,11 +125,8 @@ public class Monitor extends Scheduler.Task
 
 			// Send message
 			Transport.send(message);
-			System.out.println("Sent email successfully...");
+			Config.log("Sent email successfully...");
 		}
-		catch (MessagingException mex)
-		{
-			mex.printStackTrace();
-		}
+		catch (final MessagingException ex) { ex.printStackTrace(); }
 	}
 }

@@ -73,7 +73,7 @@ public class MyBot extends PircBot
 				giveawayWinner = winner.getNick();
 				giveawayWinnerHashCode = winner.hashCode();
 				giveawayTime = LocalTime.now();
-				System.out.println("Giveaway winner chosen: " + giveawayWinner);
+				Config.log("Giveaway winner chosen: " + giveawayWinner);
 				sendMessage("#kristyboibets", Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.NORMAL + Colors.PURPLE + winner.getNick() + Colors.RED + "! You have been randomly selected to win an " + Colors.PURPLE + "AK-47 | Redline FT" + Colors.RED + "! Type \"!accept\" in the next" + Colors.BLUE + " 30 minutes" + Colors.RED + " to claim your prize or another winner will be chosen.");
 				sched.addTask(new Scheduler.Task(3600)
 				{
@@ -374,7 +374,7 @@ public class MyBot extends PircBot
 	// public void onQuit(String sourceNick, String sourceLogin, String
 	// sourceHostname, String reason){
 	// ArrayList<String> bannedArrayList = new ArrayList<String>();
-	// System.out.println("Someone quit");
+	// Config.log("Someone quit");
 	// bannedArrayList = loadBannedList();
 	// if(bannedArrayList.contains(sourceHostname)){
 	// bannedArrayList.remove(sourceHostname);
