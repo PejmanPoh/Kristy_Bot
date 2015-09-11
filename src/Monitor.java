@@ -1,8 +1,6 @@
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Properties;
@@ -18,25 +16,26 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
-import org.jibble.pircbot.User;
-
-public class Monitor extends Thread{
+public class Monitor extends Thread
+{
 	private Date lastUpdate;
 	private final Object monitor = new Object();
-	
 
-	public Date getLastUpdate() {
-		synchronized (monitor) {
+	public Date getLastUpdate()
+	{
+		synchronized (monitor)
+		{
 			return lastUpdate;
 		}
 	}
 
-	public void run() {
-
-		try {
+	public void run()
+	{
+		try
+		{
 			Properties properties = new Properties();
 			properties.load(new FileInputStream("config.properties"));
-			
+
 			Properties props = System.getProperties();
 			// Get a Session object
 			Session session = Session.getInstance(props, null);
@@ -47,46 +46,48 @@ public class Monitor extends Thread{
 
 			// Connect
 			store.connect("imap.gmail.com", properties.getProperty("GMAIL"), properties.getProperty("GMAILpw"));
-					
 
 			// Open a Folder
 			Folder folder = store.getFolder("Inbox");
-			if (folder == null || !folder.exists()) {
+			if (folder == null || !folder.exists())
+			{
 				System.out.println("Invalid folder");
 				System.exit(1);
 			}
 
-			
-			while (true) {
-				try {
+			while (true)
+			{
+				try
+				{
 					folder.open(Folder.READ_WRITE);
-				} catch (Exception e) {
 				}
-				
+				catch (Exception e) { }
+
 				Message[] msgs = folder.getMessages();
 				int unreadMessageCount = folder.getUnreadMessageCount();
-				if (unreadMessageCount > 0) {
-					for (int i = msgs.length - 1; i >= msgs.length
-							- unreadMessageCount; i--) {
-						
-						//If spreadsheet is the right name, send the message and and sysout
-						if (msgs[i].getSubject().contains(
-								"\"September Spreadsheet\" was edited recently")
-								&& (msgs[i].isSet(Flag.SEEN)==false)) {
+				if (unreadMessageCount > 0)
+				{
+					for (int i = msgs.length - 1; i >= msgs.length - unreadMessageCount; i--)
+					{
+
+						// If spreadsheet is the right name, send the message
+						// and and sysout
+						if (msgs[i].getSubject().contains("\"September Spreadsheet\" was edited recently") && (msgs[i].isSet(Flag.SEEN) == false))
+						{
 							System.out.println("UPDATE DETECTED");
-							if (onEmailReceivedEventHandler != null){
+							if (onEmailReceivedEventHandler != null)
+							{
 								onEmailReceivedEventHandler.handle();
 							}
-							msgs[i].setFlag(Flag.SEEN,true);
-							
-							
-							//Delete the email
+							msgs[i].setFlag(Flag.SEEN, true);
+
+							// Delete the email
 							msgs[i].setFlag(Flag.DELETED, true);
 							folder.close(true);
 							folder.open(Folder.READ_WRITE);
-							
-					
-							synchronized (monitor) {
+
+							synchronized (monitor)
+							{
 								this.lastUpdate = msgs[i].getSentDate();
 							}
 						}
@@ -94,73 +95,85 @@ public class Monitor extends Thread{
 				}
 				System.out.println(LocalDateTime.now() + " Email checked");
 				Thread.sleep(45000);
-				
 			}
 
-		} catch (Exception ex) {
+		}
+		catch (Exception ex)
+		{
 			ex.printStackTrace();
 		}
 	}
-	
-	public interface OnEmailReceivedEventHandler { void handle(); }
+
+	public interface OnEmailReceivedEventHandler
+	{
+		void handle();
+	}
+
 	private OnEmailReceivedEventHandler onEmailReceivedEventHandler = null;
-	
-	public void setOnEmailReceivedEventHandler(OnEmailReceivedEventHandler onEmailReceivedEventHandler){
+
+	public void setOnEmailReceivedEventHandler(OnEmailReceivedEventHandler onEmailReceivedEventHandler)
+	{
 		this.onEmailReceivedEventHandler = onEmailReceivedEventHandler;
 	}
-	
-	public void SendGiveawayWinnerEmail(String winnerName, int winnerHashCode){
-		
-				 Properties prop = new Properties();
-				 try {
-					prop.load(new FileInputStream("config.properties"));
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				
-				 final String username = prop.getProperty("GMAIL");
-				final String password = prop.getProperty("GMAILpw");
 
-					Properties props = new Properties();
-					props.put("mail.smtp.auth", "true");
-					props.put("mail.smtp.starttls.enable", "true");
-					props.put("mail.smtp.host", "smtp.gmail.com");
-					props.put("mail.smtp.port", "587");
+	public void SendGiveawayWinnerEmail(String winnerName, int winnerHashCode)
+	{
 
-					Session session = Session.getInstance(props,
-					  new javax.mail.Authenticator() {
-						protected PasswordAuthentication getPasswordAuthentication() {
-							return new PasswordAuthentication(username, password);
-						}
-					  });
+		Properties prop = new Properties();
+		try
+		{
+			prop.load(new FileInputStream("config.properties"));
+		}
+		catch (FileNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
 
+		final String username = prop.getProperty("GMAIL");
+		final String password = prop.getProperty("GMAILpw");
 
+		Properties props = new Properties();
+		props.put("mail.smtp.auth", "true");
+		props.put("mail.smtp.starttls.enable", "true");
+		props.put("mail.smtp.host", "smtp.gmail.com");
+		props.put("mail.smtp.port", "587");
 
-		      try{
-		         // Create a default MimeMessage object.
-		         MimeMessage message = new MimeMessage(session);
+		Session session = Session.getInstance(props, new javax.mail.Authenticator()
+		{
+			protected PasswordAuthentication getPasswordAuthentication()
+			{
+				return new PasswordAuthentication(username, password);
+			}
+		});
 
-		         // Set From: header field of the header.
-		         message.setFrom(new InternetAddress(prop.getProperty("GMAIL")));
+		try
+		{
+			// Create a default MimeMessage object.
+			MimeMessage message = new MimeMessage(session);
 
-		         // Set To: header field of the header.
-		         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse("pejman.poh@gmail.com"));
+			// Set From: header field of the header.
+			message.setFrom(new InternetAddress(prop.getProperty("GMAIL")));
 
-		         // Set Subject: header field
-		         message.setSubject("New IRC giveaway winner!");
+			// Set To: header field of the header.
+			message.setRecipients(Message.RecipientType.TO, InternetAddress.parse("pejman.poh@gmail.com"));
 
-		         // Now set the actual message
-		         message.setText("Winner Nickname = " + winnerName + 
-		        		 	"\n\n Winner hashcode = " + winnerHashCode);
-		         
-		         // Send message
-		         Transport.send(message);
-		         System.out.println("Sent email successfully...");
-		      }catch (MessagingException mex) {
-		         mex.printStackTrace();
-		      }
-		
+			// Set Subject: header field
+			message.setSubject("New IRC giveaway winner!");
+
+			// Now set the actual message
+			message.setText("Winner Nickname = " + winnerName + "\n\n Winner hashcode = " + winnerHashCode);
+
+			// Send message
+			Transport.send(message);
+			System.out.println("Sent email successfully...");
+		}
+		catch (MessagingException mex)
+		{
+			mex.printStackTrace();
+		}
 	}
 }
