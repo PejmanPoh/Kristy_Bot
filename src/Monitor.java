@@ -15,13 +15,13 @@ import javax.mail.internet.MimeMessage;
 
 import org.jibble.pircbot.Colors;
 
-public class Monitor extends Scheduler.Task
+final class Monitor extends Scheduler.Task
 {
 	private Date lastUpdate;
 	private final Object monitor = new Object();
 	private Folder inbox = null;
 	
-	public Monitor()
+	Monitor()
 	{
 		super(4);
 		Session session = Session.getInstance(System.getProperties(), null);
@@ -36,7 +36,7 @@ public class Monitor extends Scheduler.Task
 		catch (final Exception ex) { Config.log(ex); }
 	}
 	
-	public final Date getLastUpdate()
+	final Date getLastUpdate()
 	{
 		synchronized (monitor)
 		{
@@ -45,7 +45,7 @@ public class Monitor extends Scheduler.Task
 	}
 
 	@Override
-	public void main()
+	public final void main()
 	{
 		try
 		{
@@ -87,7 +87,7 @@ public class Monitor extends Scheduler.Task
 		reschedule(90);
 	}
 
-	public final void sendGiveawayWinnerEmail(String winnerName, int winnerHashCode)
+	final void sendGiveawayWinnerEmail(final String winnerName, final int winnerHashCode)
 	{
 		final String username = Config.get("GMAIL");
 		final String password = Config.get("GMAILpw");
@@ -98,9 +98,9 @@ public class Monitor extends Scheduler.Task
 		props.put("mail.smtp.host", "smtp.gmail.com");
 		props.put("mail.smtp.port", "587");
 
-		Session session = Session.getInstance(props, new javax.mail.Authenticator()
+		final Session session = Session.getInstance(props, new javax.mail.Authenticator()
 		{
-			protected PasswordAuthentication getPasswordAuthentication()
+			protected final PasswordAuthentication getPasswordAuthentication()
 			{
 				return new PasswordAuthentication(username, password);
 			}
@@ -108,22 +108,12 @@ public class Monitor extends Scheduler.Task
 
 		try
 		{
-			// Create a default MimeMessage object.
-			MimeMessage message = new MimeMessage(session);
-
-			// Set From: header field of the header.
+			final MimeMessage message = new MimeMessage(session);
 			message.setFrom(new InternetAddress(username));
-
-			// Set To: header field of the header.
 			message.setRecipients(Message.RecipientType.TO, InternetAddress.parse("pejman.poh@gmail.com"));
-
-			// Set Subject: header field
 			message.setSubject("New IRC giveaway winner!");
-
-			// Now set the actual message
 			message.setText("Winner Nickname = " + winnerName + "\n\n Winner hashcode = " + winnerHashCode);
 
-			// Send message
 			Transport.send(message);
 			Config.log("Sent email successfully...");
 		}

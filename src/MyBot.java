@@ -28,7 +28,7 @@ public class MyBot extends PircBot
 	private LocalTime giveawayTime = null;
 	private Boolean giveawayWinnerAccepted = false;
 
-	public MyBot(final String name)
+	MyBot(final String name)
 	{
 		instance = this;
 		sched = new Scheduler();
@@ -210,12 +210,12 @@ public class MyBot extends PircBot
 		// What rank is kristy?
 		if ((message.contains("kristy") && message.toLowerCase().contains("rank")) || message.equalsIgnoreCase("!rank"))
 		{
-			sendMessage(channel, "Kristyboi is currently a Master Guardian Elite (MGE)");
+			sendMessage(channel, "Kristyboi is currently a Silver Elite (SE)");
 			sendMessage("ThePageMan", sender + ": Kristyboi is currently a Master Guardian Elite (MGE)");
 		}
 
 		// Bots are shit
-		if (message.contains("bot") && message.contains("are shit"))
+		if (message.contains("bot") && message.contains("shit"))
 		{
 			sendMessage(channel, ":(");
 			sendMessage("ThePageMan", sender + ": Bots are shit: :(");
@@ -230,9 +230,8 @@ public class MyBot extends PircBot
 	}
 
 	@Override
-	protected void onPrivateMessage(String sender, String login, String hostname, String message)
+	protected final void onPrivateMessage(String sender, String login, String hostname, String message)
 	{
-
 		// Relay all my PMs to the channel OR for private message /msg
 		// Kristy_Bot PRIV [NAME] [MESSAGE]
 		if (sender.contains("ThePageMan"))
@@ -340,7 +339,7 @@ public class MyBot extends PircBot
 	}
 
 	@Override
-	protected void onJoin(String channel, String sender, String login, String hostname)
+	protected final void onJoin(String channel, String sender, String login, String hostname)
 	{
 		// ban(channel,hostname);
 		//
@@ -359,8 +358,8 @@ public class MyBot extends PircBot
 		voice(channel, sender);
 	}
 
-	// public void onQuit(String sourceNick, String sourceLogin, String
-	// sourceHostname, String reason){
+	// public void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason)
+	// {
 	// ArrayList<String> bannedArrayList = new ArrayList<String>();
 	// Config.log("Someone quit");
 	// bannedArrayList = loadBannedList();
@@ -381,8 +380,6 @@ public class MyBot extends PircBot
 		sentences.add("ARISE! KRISTYBOI!");
 		sentences.add("The lean mean meme machine Kristyboi is here.");
 		sentences.add("Le toucan has arrived.");
-		sentences.add("Le toucan has arrived.");
-		sentences.add("Le toucan has arrived.");
 		sentences.add("Swiggity swooty Kristyboi is coming for that booty.");
 
 		if (sender.equalsIgnoreCase("&Kristyboi"))
@@ -396,7 +393,7 @@ public class MyBot extends PircBot
 	 * Stores a list of banned hosts in a file, one per line
 	 * @param banned The list of banned hosts
 	 */
-	public final void storeBannedList(final List<String> banned)
+	final void storeBannedList(final List<String> banned)
 	{
 		try
 		{
@@ -405,7 +402,7 @@ public class MyBot extends PircBot
 		catch (final IOException ex) { Config.log(ex); }
 	}
 
-	public final List<String> loadBannedList()
+	final List<String> loadBannedList()
 	{
 		try
 		{

@@ -1,6 +1,7 @@
 import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
 import java.time.LocalTime;
+import java.util.Date;
 import java.util.Properties;
 
 /*
@@ -27,7 +28,7 @@ final class Config
 	 */
 	static final void log(final String txt)
 	{
-		System.out.println('[' + format.format(LocalTime.now()) + "] " + txt);
+		System.out.println('[' + format.format(new Date()) + "] " + txt);
 	}
 	
 	/**
@@ -35,7 +36,7 @@ final class Config
 	 */
 	static final void log(final Exception ex)
 	{
-		System.out.println('[' + format.format(LocalTime.now()) + "] An exception has been thrown:");
+		System.out.println('[' + format.format(new Date()) + "] An exception has been thrown:");
 		System.out.println(ex.toString());
 	}
 }
