@@ -33,19 +33,15 @@ public class Monitor extends Thread
 	{
 		try
 		{
-			Properties properties = new Properties();
-			properties.load(new FileInputStream("config.properties"));
-
-			Properties props = System.getProperties();
 			// Get a Session object
-			Session session = Session.getInstance(props, null);
+			Session session = Session.getInstance(System.getProperties(), null);
 			// session.setDebug(true);
 
 			// Get a Store object
 			Store store = session.getStore("imaps");
 
 			// Connect
-			store.connect("imap.gmail.com", properties.getProperty("GMAIL"), properties.getProperty("GMAILpw"));
+			store.connect("imap.gmail.com", Config.get("GMAIL"), Config.get("GMAILpw"));
 
 			// Open a Folder
 			Folder folder = store.getFolder("Inbox");

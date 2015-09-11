@@ -1,7 +1,5 @@
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Properties;
 
 /*
  * /cs topic #kristyboibets 0,3 Welcome all Kristyboi bettors! | The only real
@@ -13,9 +11,6 @@ public class MyBotMain
 {
 	public static void main(String[] args) throws FileNotFoundException, IOException
 	{
-		Properties properties = new Properties();
-		properties.load(new FileInputStream("config.properties"));
-
 		try
 		{
 			// Now start our bot up.
@@ -28,10 +23,10 @@ public class MyBotMain
 			bot.connect("irc.rizon.net");
 
 			// Identify nick
-			bot.identify(properties.getProperty("identifypw"));
+			bot.identify(Config.get("identifypw"));
 
 			Thread.sleep(1500);
-
+			
 			// Join the channel.
 			bot.joinChannel("#kristyboibets");
 		}
