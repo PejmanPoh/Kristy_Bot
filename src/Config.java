@@ -29,4 +29,13 @@ final class Config
 	{
 		System.out.println('[' + format.format(LocalTime.now()) + "] " + txt);
 	}
+	
+	/**
+	 * Log the specified event to the console
+	 */
+	static final void log(final Exception ex)
+	{
+		System.out.println('[' + format.format(LocalTime.now()) + "] An exception has been thrown:");
+		System.out.println(ex.toString());
+	}
 }

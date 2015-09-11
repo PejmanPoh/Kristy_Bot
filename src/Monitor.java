@@ -33,7 +33,7 @@ public class Monitor extends Scheduler.Task
 			inbox = store.getFolder("Inbox");
 			if (inbox == null || !inbox.exists()) System.out.println("Invalid folder");
 		}
-		catch (final Exception ex) { ex.printStackTrace(); }
+		catch (final Exception ex) { Config.log(ex); }
 	}
 	
 	public final Date getLastUpdate()
@@ -78,7 +78,7 @@ public class Monitor extends Scheduler.Task
 			}
 			System.out.println(LocalDateTime.now() + " Email checked");
 		}
-		catch (final Exception ex) { ex.printStackTrace(); }
+		catch (final Exception ex) { Config.log(ex); }
 		finally
 		{
 			try { inbox.close(true); }
@@ -127,6 +127,6 @@ public class Monitor extends Scheduler.Task
 			Transport.send(message);
 			Config.log("Sent email successfully...");
 		}
-		catch (final MessagingException ex) { ex.printStackTrace(); }
+		catch (final MessagingException ex) { Config.log(ex); }
 	}
 }

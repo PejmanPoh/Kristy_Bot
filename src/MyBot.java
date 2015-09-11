@@ -95,6 +95,13 @@ public class MyBot extends PircBot
 		});
 	}
 
+	@Override
+	protected void onDisconnect()
+	{
+		sched.close();
+	}
+	
+	@Override
 	protected void onMessage(String channel, String sender, String login, String hostname, String message)
 	{
 		message = message.toLowerCase();
@@ -306,14 +313,6 @@ public class MyBot extends PircBot
 				sdf.setTimeZone(TimeZone.getTimeZone("GMT+1:00"));
 
 				sendMessage(sender, sender + ": The time is now " + sdf.format(currentTime));
-				try
-				{
-					Thread.sleep(2000);
-				}
-				catch (InterruptedException e)
-				{
-					e.printStackTrace();
-				}
 				break;
 
 			case ("!update"):
@@ -321,18 +320,7 @@ public class MyBot extends PircBot
 				{
 					sendMessage(sender, sender + ": " + mon.getLastUpdate().toString() + " was the last update.");
 				}
-				else
-					sendMessage(sender, "Sorry, couldn't detect most recent update.");
-
-				try
-				{
-					Thread.sleep(2000);
-				}
-				catch (InterruptedException e)
-				{
-					e.printStackTrace();
-				}
-
+				else sendMessage(sender, "Sorry, couldn't detect most recent update.");
 				break;
 
 			case ("!commands"):
@@ -414,7 +402,7 @@ public class MyBot extends PircBot
 		{
 			Files.write(Paths.get("bannedhosts.txt"), banned);
 		}
-		catch (final IOException ex) { ex.printStackTrace(); }
+		catch (final IOException ex) { Config.log(ex); }
 	}
 
 	public final List<String> loadBannedList()
@@ -423,7 +411,7 @@ public class MyBot extends PircBot
 		{
 			return Files.readAllLines(Paths.get("bannedhosts.txt"));
 		}
-		catch (final IOException ex) { ex.printStackTrace(); }
+		catch (final IOException ex) { Config.log(ex); }
 		return new ArrayList<String>();
 	}
 

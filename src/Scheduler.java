@@ -72,7 +72,7 @@ public final class Scheduler extends Thread implements AutoCloseable
 	}
 	
 	@Override
-	public final void close() throws Exception
+	public final void close()
 	{
 		interrupt();
 		exs.shutdown();
@@ -87,6 +87,7 @@ public final class Scheduler extends Thread implements AutoCloseable
 		private int timeleft;
 		
 		/**
+		 * Creates a new task to be executed after a specified delay
 	     * @param time Delay in 500ms time units
 		 */
 		public Task(final int time)
