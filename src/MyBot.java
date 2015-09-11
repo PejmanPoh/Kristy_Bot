@@ -96,7 +96,7 @@ public class MyBot extends PircBot
 	}
 
 	@Override
-	protected void onDisconnect()
+	protected final void onDisconnect()
 	{
 		sched.close();
 	}
@@ -420,7 +420,7 @@ public class MyBot extends PircBot
 	 */
 	public final User getRandomUser()
 	{
-		final List<User> users = Arrays.asList(getUsers("#kristyboibets"));
+		final ArrayList<User> users = new ArrayList<User>(Arrays.asList(getUsers("#kristyboibets")));
 		for (int i = users.size() - 1; i >= 0; --i)
 		{
 			final String pref = users.get(i).getPrefix();

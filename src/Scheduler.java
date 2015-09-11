@@ -37,7 +37,7 @@ public final class Scheduler extends Thread implements AutoCloseable
 				for (final Task t : completed) tasks.remove(t);
 				completed.clear();
 			}
-			catch (InterruptedException ex) { }
+			catch (final InterruptedException ex) { }
 		}
 		tasks.clear();
 	}
