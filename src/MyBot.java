@@ -5,11 +5,9 @@ import org.jibble.pircbot.User;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.time.LocalTime;
 import java.util.*;
 
-public class MyBot extends PircBot
+public final class MyBot extends PircBot
 {
 	/** A static main class instance */
 	public static MyBot instance;
@@ -22,38 +20,37 @@ public class MyBot extends PircBot
 	
 	private long randMsgTask, giveAwayTask, monitorTask;
 	
-	private Monitor mon = new Monitor();
+	private Monitor mon;
 	private String giveawayWinner = null;
 	private int giveawayWinnerHashCode = 0;
-	private LocalTime giveawayTime = null;
 	private Boolean giveawayWinnerAccepted = false;
 
 	MyBot(final String name)
 	{
 		instance = this;
+		setName(name);
 		sched = new Scheduler();
 		
-		final List<String> sentences = new LinkedList<String>();
-		sentences.add("Remember to drink your ovaltine kids.");
-		sentences.add("Remember to vote Kristy_Bot for Member of the Month!");
-		sentences.add("Rage betting is for losers.");
-		sentences.add("Beware the tilt.");
-		sentences.add("Beware the svv@y.");
-		sentences.add("Type !commands into chat to see the bot's commands.");
-		
+		final String[] sentences = new String[]
+		{
+			"Remember to drink your ovaltine kids.",
+			"Remember to vote Kristy_Bot for Member of the Month!",
+			"Rage betting is for losers.",
+			"Beware the tilt.",
+			"Beware the svv@y.",
+			"Type !commands into chat to see the bot's commands."
+		};
 		randMsgTask = sched.addTask(new Scheduler.Task(3600)
 		{
 			@Override
 			public final void main()
 			{
-				sendMessage("#kristyboibets", Colors.BROWN + sentences.get(rand.nextInt(sentences.size())));
+				sendMessage("#kristyboibets", Colors.BROWN + sentences[rand.nextInt(sentences.length)]);
 				reschedule(3600);
 			}
 		});
 		
-		monitorTask = sched.addTask(mon);
-		
-		setName(name);
+		monitorTask = sched.addTask(mon = new Monitor());
 
 		Calendar date = Calendar.getInstance();
 		// date.set(Calendar.DAY_OF_WEEK, Calendar.TUESDAY);
@@ -72,7 +69,6 @@ public class MyBot extends PircBot
 				final User winner = getRandomUser();
 				giveawayWinner = winner.getNick();
 				giveawayWinnerHashCode = winner.hashCode();
-				giveawayTime = LocalTime.now();
 				Config.log("Giveaway winner chosen: " + giveawayWinner);
 				sendMessage("#kristyboibets", Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.NORMAL + Colors.PURPLE + winner.getNick() + Colors.RED + "! You have been randomly selected to win an " + Colors.PURPLE + "AK-47 | Redline FT" + Colors.RED + "! Type \"!accept\" in the next" + Colors.BLUE + " 30 minutes" + Colors.RED + " to claim your prize or another winner will be chosen.");
 				sched.addTask(new Scheduler.Task(3600)
@@ -80,6 +76,7 @@ public class MyBot extends PircBot
 					@Override
 					public final void main()
 					{
+						giveawayWinner = null;
 						if (giveawayWinnerAccepted) giveawayWinnerAccepted = false;
 						else
 						{
@@ -98,54 +95,42 @@ public class MyBot extends PircBot
 	@Override
 	protected final void onDisconnect()
 	{
+		sched.cancelTask(monitorTask);
+		sched.cancelTask(giveAwayTask);
+		sched.cancelTask(randMsgTask);
 		sched.close();
 	}
 	
-	@Override
-	protected void onMessage(String channel, String sender, String login, String hostname, String message)
+	/**
+	 * Processes bot commands
+	 * @param channel Null if the command comes from a private message
+	 * @param sender Message sender
+	 * @param message Message contents in lower-case
+	 */
+	private final void onCommand(final String channel, final String sender, final String message)
 	{
-		message = message.toLowerCase();
-		LocalTime localTime = LocalTime.now();
-		switch (message)
+		final String[] parts = message.substring(1).split(" ");
+		switch (parts[0])
 		{
-			case ("!accept"):
-				if (sender.equals(giveawayWinner) && (localTime.isBefore(giveawayTime.plusMinutes(30))) && !giveawayWinnerAccepted)
+			case "accept":
+				if (sender.equals(giveawayWinner) && !giveawayWinnerAccepted)
 				{
 					giveawayWinnerAccepted = true;
-
-					sendMessage(channel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + giveawayWinner + Colors.RED + "! Follow the instructions on the steam group page or type \"!IWON\" to find out how to collect your prize!");
+					sendMessage(channel == null ? sender : channel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + giveawayWinner + Colors.RED + "! Follow the instructions on the steam group page or type \"!IWON\" to find out how to collect your prize!");
 					// Sends the email to me with info of the winner
 					mon.sendGiveawayWinnerEmail(giveawayWinner, giveawayWinnerHashCode);
 				}
-			    // Maybe create a new !command to find out what to do when you win a giveaway.
+				else sendMessage(sender, "You're not the winner of the current giveaway.");
 				break;
-
-			case ("!time"):
-				final Date currentTime = new Date();
-
-				final SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss a z");
-
-				// Give it to me in GMT+1 time.
-				sdf.setTimeZone(TimeZone.getTimeZone("GMT+1:00"));
-
-				sendMessage(channel, sender + ": The time is now " + sdf.format(currentTime));
-				sendMessage("ThePageMan", sender + ": The time is now " + sdf.format(currentTime));
+				
+			case "update":
+				if (mon.getLastUpdate() == null) sendMessage(sender, "Sorry, couldn't detect most recent update.");
+				else if (channel != null) sendMessage(channel, sender + ": The last update was at " + mon.getLastUpdate().toString());
+				else sendMessage(channel, "The last update was at " + mon.getLastUpdate().toString());
 				break;
-
-			case ("!update"):
-				// If the monitor doesn't know the last update
-				if (mon.getLastUpdate() != null)
-				{
-					sendMessage(channel, sender + ": " + mon.getLastUpdate().toString() + " was the last update.");
-				}
-				else sendMessage(channel, "Sorry, couldn't detect most recent update.");
-
-				sendMessage("ThePageMan", sender + ": !update");
-				break;
-
-			case ("!iwon"):
-				sendMessage("ThePageMan", sender + ": !IWON");
-				sendMessage(channel, sender + ": Check your PMs!");
+				
+			case "iwon":
+				if (channel != null) sendMessage(channel, sender + ": Check your PMs!");
 				sendMessage(sender, "                       ***CONGRATULATIONS ***");
 				sendMessage(sender, "SO you won the giveaway? Nice! To claim your prize, please follow these instructions.");
 				sendMessage(sender, "   1. Screenshot the message that Kristy_Bot announces which has your name in it.");
@@ -154,12 +139,15 @@ public class MyBot extends PircBot
 				sendMessage(sender, "   4. Wait for Kristyboi or myself to send you the redline.");
 				sendMessage(sender, "   5. Enjoy the redline!");
 				break;
-			case ("!commands"):
-				sendMessage("ThePageMan", sender + ": !commands");
-				sendMessage(channel, sender + ": Check your PMs!");
+				
+			case "rank":
+				sendMessage(channel == null ? sender : channel, "Kristyboi is currently a Silver Elite (SE)");
+				break;
+				
+			case "commands":
+				if (channel != null) sendMessage(channel, sender + ": Check your PMs!");
 				sendMessage(sender, "               *** Welcome to Kristy_Bot ***");
 				sendMessage(sender, "              *** Current list of commands ***");
-				sendMessage(sender, Colors.BLUE + "!time" + Colors.NORMAL + " :- See the time in Ireland.");
 				sendMessage(sender, Colors.BLUE + "!update" + Colors.NORMAL + " :- Show the [DATE & TIME] of the most recent spreadsheet update.");
 				sendMessage(sender, Colors.BLUE + "!rank" + Colors.NORMAL + " :- To see Kristyboi's current rank.");
 				sendMessage(sender, Colors.BLUE + "qq [NAME]" + Colors.NORMAL + " :- To send the user a place to cry to.");
@@ -168,69 +156,64 @@ public class MyBot extends PircBot
 				sendMessage(sender, " ");
 				sendMessage(sender, "If you have any ideas for future commands of the bot, " + "feel free to send a PM to ThePageMan. Just type \"/msg ThePageMan\" to send a PM.");
 				break;
+				
+			case "hash":
+				if (sender.startsWith("~"))
+				{
+					final String[] HASHparts = message.split("\\s+");
+					final String HASHuser = HASHparts[1];
+					final User[] users = getUsers("#kristyboibets");
 
-			case ("hey kristy"):
-			case ("hey kristyboi"):
-			case ("hi kristy"):
-			case ("hi kristyboi"):
-			case ("sup kristy"):
-			case ("sup kristyboi"):
-				sendMessage(channel, "hi " + sender);
-				sendMessage("ThePageMan", sender + ": hi " + sender);
+					for (int i = 0; i < users.length; i++)
+					{
+						if (users[i].getNick().equalsIgnoreCase(HASHuser))
+						{
+							sendMessage(sender, "Hashcode of " + users[i].getNick() + ": " + users[i].hashCode());
+						}
+					}
+				}
+				else sendMessage(sender, "Access to command denied");
+				break;
+				
+			default:
+				sendMessage(sender, "Unknown command!");
 				break;
 		}
-
-		if (message.contains("rip skins") || message.equals("qq"))
+	}
+	
+	@Override
+	protected final void onMessage(final String channel, final String sender, final String login, final String hostname, final String message)
+	{
+		final String msgLower = message.toLowerCase();
+		if (msgLower.startsWith("!")) onCommand(channel, sender, message.toLowerCase());
+		else if (msgLower.contains("rip") && msgLower.contains("skin") || msgLower.equals("qq"))
 		{
 			sendMessage(channel, sender + ": http://how.icryeverytime.com");
 		}
-
-		// qq [name]
-		else if (message.startsWith("qq"))
+		else if (msgLower.startsWith("qq"))
 		{
-
-			String[] parts = message.split("\\s+");
-			User[] users = getUsers("#kristyboibets");
+			final String[] parts = msgLower.split(" ");
+			final User[] users = getUsers("#kristyboibets");
 			for (int i = 0; i < users.length - 1; i++)
 			{
-
-				if ((users[i].getNick().toLowerCase().equals(parts[1].toLowerCase())))
+				if ((users[i].getNick().toLowerCase().equals(parts[1])))
 				{
 					sendMessage(channel, users[i].getNick() + ": http://how.icryeverytime.com");
-					break;
 				}
-				if (users[i].getNick().substring(1).toLowerCase().equals(parts[1].toLowerCase()))
+				else if (users[i].getNick().substring(1).toLowerCase().equals(parts[1]))
 				{
 					sendMessage(channel, users[i].getNick() + ": http://how.icryeverytime.com");
-					break;
 				}
 			}
 		}
-
-		// What rank is kristy?
-		if ((message.contains("kristy") && message.toLowerCase().contains("rank")) || message.equalsIgnoreCase("!rank"))
-		{
-			sendMessage(channel, "Kristyboi is currently a Silver Elite (SE)");
-			sendMessage("ThePageMan", sender + ": Kristyboi is currently a Master Guardian Elite (MGE)");
-		}
-
-		// Bots are shit
-		if (message.contains("bot") && message.contains("shit"))
+		else if (msgLower.contains("bot") && (msgLower.contains("shit") || msgLower.contains("crap") || msgLower.contains("useless")))
 		{
 			sendMessage(channel, ":(");
-			sendMessage("ThePageMan", sender + ": Bots are shit: :(");
 		}
-
-		// If my name is mentioned
-		if (message.contains("pageman"))
-		{
-			sendMessage("ThePageMan", sender + ": You were mentioned!");
-		}
-
 	}
 
 	@Override
-	protected final void onPrivateMessage(String sender, String login, String hostname, String message)
+	protected final void onPrivateMessage(final String sender, final String login, final String hostname, final String message)
 	{
 		// Relay all my PMs to the channel OR for private message /msg
 		// Kristy_Bot PRIV [NAME] [MESSAGE]
@@ -251,91 +234,11 @@ public class MyBot extends PircBot
 				String PMmessage = message.substring(4);
 				sendMessage("#kristyboibets", PMmessage);
 			}
-
-			// Checks hash of a user
-			if (message.startsWith("!hash"))
-			{
-				String[] HASHparts = message.split("\\s+");
-				String HASHuser = HASHparts[1];
-				User[] users = getUsers("#kristyboibets");
-
-				for (int i = 0; i < users.length; i++)
-				{
-					if (users[i].getNick().equals(HASHuser))
-					{
-						sendMessage("ThePageMan", "Hashcode: " + users[i].hashCode());
-					}
-				}
-			}
 		}
+		else if (message.startsWith("!")) onCommand(null, sender, message.toLowerCase());
 
-		// qq [name]
-		if (message.startsWith("qq"))
-		{
-
-			String[] parts = message.split("\\s+");
-			User[] users = getUsers("#kristyboibets");
-			for (int i = 0; i < users.length - 1; i++)
-			{
-				if (users[i].getPrefix() == "")
-				{
-					if (users[i].getNick().toLowerCase().equals(parts[1].toLowerCase()))
-					{
-						sendMessage("#kristyboibets", users[i].getNick() + ": http://how.icryeverytime.com");
-						break;
-					}
-					else
-					{
-						if (users[i].getNick().substring(1).toLowerCase().equals(parts[1].toLowerCase()))
-						{
-							sendMessage("#kristyboibets", users[i].getNick() + ": http://how.icryeverytime.com");
-							break;
-						}
-
-					}
-				}
-			}
-		}
-
-		// relay all Bot PMs to me
+		// Relay all Bot PMs to ThePageMan because why not lel
 		sendMessage("ThePageMan", sender + ": " + message);
-
-		message = message.toLowerCase();
-		switch (message)
-		{
-			case ("!time"):
-				final Date currentTime = new Date();
-
-				final SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss a z");
-
-				// Give it to me in GMT+1 time.
-				sdf.setTimeZone(TimeZone.getTimeZone("GMT+1:00"));
-
-				sendMessage(sender, sender + ": The time is now " + sdf.format(currentTime));
-				break;
-
-			case ("!update"):
-				if (mon.getLastUpdate() != null)
-				{
-					sendMessage(sender, sender + ": " + mon.getLastUpdate().toString() + " was the last update.");
-				}
-				else sendMessage(sender, "Sorry, couldn't detect most recent update.");
-				break;
-
-			case ("!commands"):
-				sendMessage(sender, "               *** Welcome to Kristy_Bot ***");
-				sendMessage(sender, "              *** Current list of commands ***");
-				sendMessage(sender, "Type these commands in chat or PM them to the bot using \"/msg Kristy_Bot [COMMAND]\".");
-				sendMessage(sender, Colors.BLUE + "!time" + Colors.NORMAL + " :- See the time in Ireland.");
-				sendMessage(sender, Colors.BLUE + "!update" + Colors.NORMAL + " :- Show the [DATE & TIME] of the most recent spreadsheet update.");
-				sendMessage(sender, Colors.BLUE + "!rank" + Colors.NORMAL + " :- To see Kristyboi's current rank.");
-				sendMessage(sender, Colors.BLUE + "qq [NAME]" + Colors.NORMAL + " :- To send the user a place to cry to.");
-				sendMessage(sender, " ");
-				sendMessage(sender, "Also another helpful command not related to the bot is " + "\"/msg NickServ Register [PASSWORD] [EMAIL]\". " + "This command allows you to register your nickname so that you can claim it. " + "Type \"/msg NickServ help\" for the full list of commands. " + "You can kick people off your username automatically after 60 seconds " + "among other useful features.");
-				sendMessage(sender, " ");
-				sendMessage(sender, "If you have any ideas for future commands of the bot, " + "feel free to send a PM to ThePageMan OR to the bot itself! " + "Just type \"/msg ThePageMan/Kristy_Bot\" to send either of us a PM.");
-				break;
-		}
 	}
 
 	@Override
@@ -372,20 +275,21 @@ public class MyBot extends PircBot
 	// unBan("#kristyboibets",sourceHostname);
 	// }
 	
-	protected final void onOP(String channel, String sender, String login, String hostname)
+	@Override
+	protected final void onOp(final String channel, final String sourceNick, final String sourceLogin, final String sourceHostname, final String recipient)
 	{
-		List<String> sentences = new LinkedList<String>();
-		sentences.add("ALL RISE! Kristyboi has identified himself to the channel.");
-		sentences.add("Kristyboi 3 Confirmed.");
-		sentences.add("ARISE! KRISTYBOI!");
-		sentences.add("The lean mean meme machine Kristyboi is here.");
-		sentences.add("Le toucan has arrived.");
-		sentences.add("Swiggity swooty Kristyboi is coming for that booty.");
-
-		if (sender.equalsIgnoreCase("&Kristyboi"))
+		if (recipient.equalsIgnoreCase("&Kristyboi"))
 		{
-			sendMessage(channel, Colors.DARK_GREEN + sentences.get(rand.nextInt(sentences.size())));
-			sendMessage("ThePageMan", Colors.DARK_GREEN + sentences.get(rand.nextInt(sentences.size())));
+			final String[] sentences = new String[]
+			{
+				"ALL RISE! Kristyboi has identified himself to the channel.",
+				"Kristyboi 3 Confirmed.",
+				"ARISE! KRISTYBOI!",
+				"The lean mean meme machine Kristyboi is here.",
+				"Le toucan has arrived.",
+				"Swiggity swooty Kristyboi is coming for that booty."
+			};
+			sendMessage(channel, Colors.DARK_GREEN + sentences[rand.nextInt(sentences.length)]);
 		}
 	}
 
