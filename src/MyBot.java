@@ -62,9 +62,8 @@ public class MyBot extends PircBot
 		date.set(Calendar.MINUTE, 30);
 		date.set(Calendar.SECOND, 0);
 		date.set(Calendar.MILLISECOND, 0);
-		
-		//Begin the giveaway system at 'date' + a random time between 0-4 hours
-		giveAwayTask = sched.addTask(new Scheduler.Task((int)(((date.getTimeInMillis() - System.currentTimeMillis()) / 500) + rand.nextInt(28800)))
+
+		giveAwayTask = sched.addTask(new Scheduler.Task((int)((date.getTimeInMillis() - System.currentTimeMillis()) / 500))
 		{
 			@Override
 			public final void main()
@@ -86,12 +85,12 @@ public class MyBot extends PircBot
 						{
 							sendMessage("#kristyboibets", Colors.RED + "As " + Colors.PURPLE + winner.getNick() + Colors.RED + " has not collected their prize, a new winner will be chosen soon.");
 							// Pick another user in 25-50 seconds, will override the reschedule below
-							giveawayTask.reschedule(50);
+							giveawayTask.reschedule(50 + rand.nextInt(50));
 						}
 					}
 				});
 				// Pick another user in 20-28 hours
-				//reschedule(144000 + rand.nextInt(57600));
+				reschedule(144000 + rand.nextInt(57600));
 			}
 		});
 	}
@@ -114,7 +113,7 @@ public class MyBot extends PircBot
 				{
 					giveawayWinnerAccepted = true;
 
-					sendMessage(channel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + giveawayWinner + Colors.RED + "! Follow the instructions on the steam group page or type \"!iwon\" to find out how to collect your prize!");
+					sendMessage(channel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + giveawayWinner + Colors.RED + "! Follow the instructions on the steam group page or type \"!IWON\" to find out how to collect your prize!");
 					// Sends the email to me with info of the winner
 					mon.sendGiveawayWinnerEmail(giveawayWinner, giveawayWinnerHashCode);
 				}
