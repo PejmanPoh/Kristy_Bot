@@ -16,14 +16,12 @@ public final class MyBot extends PircBot
 	public static final Random rand = new Random();
 	
 	/** A task scheduler instance */
-	private final Scheduler sched;
+	public final Scheduler sched;
 	
-	private long randMsgTask, giveAwayTask, monitorTask;
+	private long randMsgTask;
 	
-	private Monitor mon;
-	private String giveawayWinner = null;
-	private int giveawayWinnerHashCode = 0;
-	private Boolean giveawayWinnerAccepted = false;
+	private GiveawayTask gTask;
+	private MonitorTask mTask;
 
 	MyBot(final String name)
 	{
@@ -50,7 +48,7 @@ public final class MyBot extends PircBot
 			}
 		});
 		
-		monitorTask = sched.addTask(mon = new Monitor());
+		sched.addTask(mTask = new MonitorTask());
 
 		Calendar date = Calendar.getInstance();
 		// date.set(Calendar.DAY_OF_WEEK, Calendar.TUESDAY);
@@ -60,44 +58,15 @@ public final class MyBot extends PircBot
 		date.set(Calendar.SECOND, 0);
 		date.set(Calendar.MILLISECOND, 0);
 		
-		//Begin the giveaway system at 'date' + a random time between 0-4 hours
-		giveAwayTask = sched.addTask(new Scheduler.Task((int)(((date.getTimeInMillis() - System.currentTimeMillis()) / 500) + rand.nextInt(28800)))
-		{
-			@Override
-			public final void main()
-			{
-				final Scheduler.Task giveawayTask = this;
-				final User winner = getRandomUser();
-				giveawayWinner = winner.getNick();
-				giveawayWinnerHashCode = winner.hashCode();
-				Config.log("Giveaway winner chosen: " + giveawayWinner);
-				sendMessage(Config.mainChannel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.NORMAL + Colors.PURPLE + winner.getNick() + Colors.RED + "! You have been randomly selected to win an " + Colors.PURPLE + "AK-47 | Redline FT" + Colors.RED + "! Type \"!accept\" in the next" + Colors.BLUE + " 30 minutes" + Colors.RED + " to claim your prize or another winner will be chosen.");
-				sched.addTask(new Scheduler.Task(3600)
-				{
-					@Override
-					public final void main()
-					{
-						giveawayWinner = null;
-						if (giveawayWinnerAccepted) giveawayWinnerAccepted = false;
-						else
-						{
-							sendMessage(Config.mainChannel, Colors.RED + "As " + Colors.PURPLE + winner.getNick() + Colors.RED + " has not collected their prize, a new winner will be chosen soon.");
-							// Pick another user in 25-50 seconds, will override the reschedule below
-							giveawayTask.reschedule(50);
-						}
-					}
-				});
-				// Pick another user in 20-28 hours
-				//reschedule(144000 + rand.nextInt(57600));
-			}
-		});
+		//Begin the giveaway system at 'date'
+		sched.addTask(gTask = new GiveawayTask(this, date));
 	}
 
 	@Override
 	protected final void onDisconnect()
 	{
-		sched.cancelTask(monitorTask);
-		sched.cancelTask(giveAwayTask);
+		sched.cancelTask(mTask.ID);
+		sched.cancelTask(gTask.ID);
 		sched.cancelTask(randMsgTask);
 		sched.close();
 	}
@@ -115,21 +84,19 @@ public final class MyBot extends PircBot
 		switch (parts[0])
 		{
 			case "accept":
-				if (sender.equals(giveawayWinner) && !giveawayWinnerAccepted)
+				if (gTask.isWinner(getUserByNick(sender)))
 				{
-					giveawayWinnerAccepted = true;
-					sendMessage(channel == null ? sender : channel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + giveawayWinner + Colors.RED + "! Follow the instructions on the steam group page or type \"!IWON\" to find out how to collect your prize!");
-
-					// Sends the email to me with info of the winner
-					mon.sendGiveawayWinnerEmail(giveawayWinner, giveawayWinnerHashCode);
+					gTask.acceptReward();
+					sendMessage(Config.mainChannel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + gTask.winner + Colors.RED + "! Follow the instructions on the steam group page or type \"!IWON\" to find out how to collect your prize!");
 				}
 				else sendMessage(sender, "You're not the winner of the current giveaway.");
 				break;
 				
 			case "update":
-				if (mon.getLastUpdate() == null) sendMessage(sender, "Sorry, couldn't detect most recent update.");
-				else if (channel != null) sendMessage(channel, sender + ": The last update was at " + mon.getLastUpdate().toString());
-				else sendMessage(sender, "The last update was at " + mon.getLastUpdate().toString());
+				final Date upd = mTask.getLastUpdate();
+				if (upd == null) sendMessage(sender, "Sorry, couldn't detect most recent update.");
+				else if (channel != null) sendMessage(channel, sender + ": The last update was at " + upd.toString());
+				else sendMessage(sender, "The last update was at " + upd.toString());
 				break;
 				
 			case "iwon":
@@ -203,10 +170,11 @@ public final class MyBot extends PircBot
 	/**
 	 * Returns special permission indicator character for given User
 	 */
-	private final char getRealPref(final User u)
+	private final String getRealPref(final User u)
 	{
-		if (!Character.isAlphabetic(u.getNick().charAt(0))) return u.getNick().charAt(0);
-		else return u.getPrefix().charAt(0);
+		final String name = u.getPrefix() + u.getNick();
+		return name.substring(0, name.length() - getRealNick(name).length());
+		
 	}
 	
 	/**
@@ -214,7 +182,12 @@ public final class MyBot extends PircBot
 	 */
 	private final String getRealNick(String nick)
 	{
-		while (!Character.isAlphabetic(nick.charAt(0))) nick = nick.substring(1);
+		char c = nick.charAt(0);
+		while (c == '~' || c == '@' || c == '&' || c == '+')
+		{
+			nick = nick.substring(1);
+			c = nick.charAt(0);
+		}
 		return nick;
 	}
 	
@@ -357,8 +330,8 @@ public final class MyBot extends PircBot
 		final ArrayList<User> users = new ArrayList<User>(Arrays.asList(getUsers(Config.mainChannel)));
 		for (int i = users.size() - 1; i >= 0; --i)
 		{
-			final char prefix = getRealPref(users.get(i));
-			if (prefix == '~' || prefix == '&')
+			final String prefix = getRealPref(users.get(i));
+			if (prefix.contains("~") || prefix.contains("&"))
 			{
 				users.remove(i);
 				++i;

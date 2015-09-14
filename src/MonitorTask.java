@@ -14,13 +14,13 @@ import javax.mail.internet.MimeMessage;
 
 import org.jibble.pircbot.Colors;
 
-final class Monitor extends Scheduler.Task
+final class MonitorTask extends Scheduler.Task
 {
 	private Date lastUpdate;
 	private final Object monitor = new Object();
 	private Folder inbox = null;
 	
-	Monitor()
+	MonitorTask()
 	{
 		super(4);
 		final Session session = Session.getInstance(System.getProperties(), null);
@@ -89,38 +89,5 @@ final class Monitor extends Scheduler.Task
 			catch (final MessagingException | IllegalStateException ex) { }
 		}
 		reschedule(90);
-	}
-
-	final void sendGiveawayWinnerEmail(final String winnerName, final int winnerHashCode)
-	{
-		final String username = Config.get("GMAIL");
-		final String password = Config.get("GMAILpw");
-
-		final Properties props = new Properties();
-		props.put("mail.smtp.auth", "true");
-		props.put("mail.smtp.starttls.enable", "true");
-		props.put("mail.smtp.host", "smtp.gmail.com");
-		props.put("mail.smtp.port", "587");
-
-		final Session session = Session.getInstance(props, new javax.mail.Authenticator()
-		{
-			protected final PasswordAuthentication getPasswordAuthentication()
-			{
-				return new PasswordAuthentication(username, password);
-			}
-		});
-
-		try
-		{
-			final MimeMessage message = new MimeMessage(session);
-			message.setFrom(new InternetAddress(username));
-			message.setRecipients(Message.RecipientType.TO, InternetAddress.parse("pejman.poh@gmail.com"));
-			message.setSubject("New IRC giveaway winner!");
-			message.setText("Winner Nickname = " + winnerName + "\n\n Winner hashcode = " + winnerHashCode);
-
-			Transport.send(message);
-			Config.log("Sent email successfully");
-		}
-		catch (final MessagingException ex) { Config.log(ex); }
 	}
 }
