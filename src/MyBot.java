@@ -159,12 +159,10 @@ public final class MyBot extends PircBot
 				break;
 				
 			case "hash":
-				if (sender.equals("ThePageMan"))
+				if (getRealNick(sender).equals("ThePageMan"))
 				{
 					final String[] HASHparts = message.split("\\s+");
 					final String HASHuser = HASHparts[1];
-					
-
 					for (int i = 0; i < users.length; i++)
 					{
 						if (users[i].getNick().equalsIgnoreCase(HASHuser))
@@ -177,8 +175,9 @@ public final class MyBot extends PircBot
 				break;
 				
 			case "prefix":
-				final User u = getUserByNick(sender);
-				if (u != null) sendMessage(sender, "Your prefix is '" + u.getPrefix() + "' and your full name is '" + u.getNick() + "'.");
+				final User u = getUserByNick(parts.length > 1 ? parts[1] : sender);
+				if (u != null) sendMessage(sender, "Prefix is '" + u.getPrefix() + "' and full name is '" + u.getNick() + "'.");
+				else sendMessage(sender, "User not found.");
 				break;
 				
 			default:
@@ -200,12 +199,12 @@ public final class MyBot extends PircBot
 	}
 	
 	/**
-	 * Returns special permission indicator character for nickname
+	 * Returns special permission indicator character for given User
 	 */
-	private final char getRealPref(final String nick)
+	private final char getRealPref(final User u)
 	{
-		if (!Character.isAlphabetic(nick.charAt(0))) return nick.charAt(0);
-		else return getUserByNick(nick).getPrefix().charAt(0);
+		if (!Character.isAlphabetic(u.getNick().charAt(0))) return u.getNick().charAt(0);
+		else return u.getPrefix().charAt(0);
 	}
 	
 	/**
@@ -221,7 +220,7 @@ public final class MyBot extends PircBot
 	protected final void onMessage(final String channel, final String sender, final String login, final String hostname, final String message)
 	{
 		final String msgLower = message.toLowerCase();
-		if (msgLower.startsWith("!")) onCommand(channel, sender, message.toLowerCase());
+		if (msgLower.startsWith("!")) onCommand(channel, sender, msgLower);
 		else if (msgLower.contains("rip") && msgLower.contains("skin") || msgLower.equals("qq"))
 		{
 			sendMessage(channel, sender + ": http://how.icryeverytime.com");
@@ -251,31 +250,26 @@ public final class MyBot extends PircBot
 	@Override
 	protected final void onPrivateMessage(final String sender, final String login, final String hostname, final String message)
 	{
-		
 		if (message.startsWith("!")) onCommand(null, sender, message.toLowerCase());
-		// Relay all my PMs to the channel OR for private message /msg
-		// Kristy_Bot PRIV [NAME] [MESSAGE]
-		if (sender.contains("ThePageMan"))
-		if (getRealNick(sender).equals("ThePageMan"))
+		else if (getRealNick(sender).equals("ThePageMan"))
 		{
-			String[] PMparts = message.split("\\s+");
-			
+			final String[] PMparts = message.split("\\s+");
+			// Kristy_Bot PRIV [NAME] [MESSAGE]
 			if (message.startsWith("PRIV"))
 			{
 				String PMreceiver = PMparts[1];
 				String PMmessage = message.substring(5 + PMparts[1].length());
 				sendMessage(PMreceiver, PMmessage);
 			}
-
 			// /msg Kristy_Bot PUB [MESSAGE]
-			if (message.startsWith("PUB"))
+			else if (message.startsWith("PUB"))
 			{
 				String PMmessage = message.substring(4);
 				sendMessage("#kristyboibets", PMmessage);
 			}
 		}
 		// Relay all Bot PMs to ThePageMan because why not lel
-		sendMessage("ThePageMan", sender + ": " + message);
+		else sendMessage("ThePageMan", sender + ": " + message);
 	}
 
 	@Override
@@ -361,7 +355,7 @@ public final class MyBot extends PircBot
 		final ArrayList<User> users = new ArrayList<User>(Arrays.asList(getUsers("#kristyboibets")));
 		for (int i = users.size() - 1; i >= 0; --i)
 		{
-			final char prefix = getRealPref(users.get(i).getNick());
+			final char prefix = getRealPref(users.get(i));
 			if (prefix == '~' || prefix == '&')
 			{
 				users.remove(i);
