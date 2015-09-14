@@ -1,9 +1,3 @@
-/*
- * /cs topic #kristyboibets 0,3 Welcome all Kristyboi bettors! | The only real
- * Kristyboi has a key and star next to his name | You need to be registered to
- * talk. Still can't? Make sure you are identified with the server.
- */
-
 public final class MyBotMain
 {
 	public static final void main(final String[] args)
@@ -24,8 +18,8 @@ public final class MyBotMain
 
 			Thread.sleep(1500);
 			
-			Config.log("Joining #kristyboibets...");
-			bot.joinChannel("#kristyboibets");
+			Config.log("Joining " + Config.mainChannel + "...");
+			bot.joinChannel(Config.mainChannel);
 		}
 		catch (final Exception ex) { Config.log(ex); }
 	}

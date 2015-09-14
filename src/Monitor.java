@@ -64,7 +64,7 @@ final class Monitor extends Scheduler.Task
 						{
 							// Prevent multiple announcments
 							send = false;
-							MyBot.instance.sendMessage("#kristyboibets", Colors.RED + "***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
+							MyBot.instance.sendMessage(Config.mainChannel, Colors.RED + "***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
 						}
 						msgs[i].setFlag(Flag.SEEN, true);
 

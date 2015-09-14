@@ -11,6 +11,8 @@ final class Config
 	private static final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 	private static final Properties props = new Properties();
 	
+	public static final String mainChannel = "#kristyboibets";
+	
 	static
 	{
 		try { props.load(new FileInputStream("config.properties")); }
@@ -35,7 +37,7 @@ final class Config
 	 */
 	static final void log(final Exception ex)
 	{
-		System.out.println('[' + format.format(new Date()) + "] An exception has been thrown:");
+		System.out.println('[' + format.format(new Date()) + "] An exception has been thrown: " + ex.getMessage());
 		System.out.println(ex.toString());
 	}
 }

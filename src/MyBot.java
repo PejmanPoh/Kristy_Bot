@@ -45,7 +45,7 @@ public final class MyBot extends PircBot
 			@Override
 			public final void main()
 			{
-				sendMessage("#kristyboibets", Colors.BROWN + sentences[rand.nextInt(sentences.length)]);
+				sendMessage(Config.mainChannel, Colors.BROWN + sentences[rand.nextInt(sentences.length)]);
 				reschedule(3600);
 			}
 		});
@@ -70,7 +70,7 @@ public final class MyBot extends PircBot
 				giveawayWinner = winner.getNick();
 				giveawayWinnerHashCode = winner.hashCode();
 				Config.log("Giveaway winner chosen: " + giveawayWinner);
-				sendMessage("#kristyboibets", Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.NORMAL + Colors.PURPLE + winner.getNick() + Colors.RED + "! You have been randomly selected to win an " + Colors.PURPLE + "AK-47 | Redline FT" + Colors.RED + "! Type \"!accept\" in the next" + Colors.BLUE + " 30 minutes" + Colors.RED + " to claim your prize or another winner will be chosen.");
+				sendMessage(Config.mainChannel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.NORMAL + Colors.PURPLE + winner.getNick() + Colors.RED + "! You have been randomly selected to win an " + Colors.PURPLE + "AK-47 | Redline FT" + Colors.RED + "! Type \"!accept\" in the next" + Colors.BLUE + " 30 minutes" + Colors.RED + " to claim your prize or another winner will be chosen.");
 				sched.addTask(new Scheduler.Task(3600)
 				{
 					@Override
@@ -80,7 +80,7 @@ public final class MyBot extends PircBot
 						if (giveawayWinnerAccepted) giveawayWinnerAccepted = false;
 						else
 						{
-							sendMessage("#kristyboibets", Colors.RED + "As " + Colors.PURPLE + winner.getNick() + Colors.RED + " has not collected their prize, a new winner will be chosen soon.");
+							sendMessage(Config.mainChannel, Colors.RED + "As " + Colors.PURPLE + winner.getNick() + Colors.RED + " has not collected their prize, a new winner will be chosen soon.");
 							// Pick another user in 25-50 seconds, will override the reschedule below
 							giveawayTask.reschedule(50 + rand.nextInt(50));
 						}
@@ -110,7 +110,7 @@ public final class MyBot extends PircBot
 	private final void onCommand(final String channel, final String sender, final String message)
 	{
 		final String[] parts = message.substring(1).split(" ");
-		final User[] users = getUsers("#kristyboibets");
+		final User[] users = getUsers(Config.mainChannel);
 		switch (parts[0])
 		{
 			case "accept":
@@ -193,7 +193,7 @@ public final class MyBot extends PircBot
 	private final User getUserByNick(String nick)
 	{
 		nick = getRealNick(nick);
-		final User[] usrs = getUsers("#kristyboibets");
+		final User[] usrs = getUsers(Config.mainChannel);
 		for (final User u : usrs) if (nick.equals(u.getNick())) return u;
 		return null;
 	}
@@ -228,7 +228,7 @@ public final class MyBot extends PircBot
 		else if (msgLower.startsWith("qq"))
 		{
 			final String[] parts = msgLower.split(" ");
-			final User[] users = getUsers("#kristyboibets");
+			final User[] users = getUsers(Config.mainChannel);
 			for (int i = 0; i < users.length - 1; i++)
 			{
 				if ((users[i].getNick().toLowerCase().equals(parts[1])))
@@ -265,7 +265,7 @@ public final class MyBot extends PircBot
 			else if (message.startsWith("PUB"))
 			{
 				String PMmessage = message.substring(4);
-				sendMessage("#kristyboibets", PMmessage);
+				sendMessage(Config.mainChannel, PMmessage);
 			}
 		}
 		// Relay all Bot PMs to ThePageMan because why not lel
@@ -303,7 +303,7 @@ public final class MyBot extends PircBot
 	//
 	// storeBannedList(bannedArrayList);
 	//
-	// unBan("#kristyboibets",sourceHostname);
+	// unBan(Config.mainChannel,sourceHostname);
 	// }
 	
 	@Override
@@ -352,7 +352,7 @@ public final class MyBot extends PircBot
 	 */
 	public final User getRandomUser()
 	{
-		final ArrayList<User> users = new ArrayList<User>(Arrays.asList(getUsers("#kristyboibets")));
+		final ArrayList<User> users = new ArrayList<User>(Arrays.asList(getUsers(Config.mainChannel)));
 		for (int i = users.size() - 1; i >= 0; --i)
 		{
 			final char prefix = getRealPref(users.get(i));
