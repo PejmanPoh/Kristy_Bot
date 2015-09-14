@@ -86,7 +86,7 @@ final class Monitor extends Scheduler.Task
 		finally
 		{
 			try { inbox.close(true); }
-			catch (final MessagingException ex) { }
+			catch (final MessagingException | IllegalStateException ex) { }
 		}
 		reschedule(90);
 	}
