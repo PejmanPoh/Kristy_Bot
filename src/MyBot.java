@@ -190,11 +190,30 @@ public final class MyBot extends PircBot
 	 * Fetch a User class instance for given nickname
 	 * @param nick The nickname to look up for
 	 */
-	private final User getUserByNick(final String nick)
+	private final User getUserByNick(String nick)
 	{
+		nick = getRealNick(nick);
 		final User[] usrs = getUsers("#kristyboibets");
-		for (final User u : usrs) if (u.getNick().equals(nick)) return u;
+		for (final User u : usrs) if (nick.equals(u.getNick())) return u;
 		return null;
+	}
+	
+	/**
+	 * Returns special permission indicator character for nickname
+	 */
+	private final char getRealPref(final String nick)
+	{
+		if (!Character.isAlphabetic(nick.charAt(0))) return nick.charAt(0);
+		else return getUserByNick(nick).getPrefix().charAt(0);
+	}
+	
+	/**
+	 * Strips special permission indicator characters from nickname
+	 */
+	private final String getRealNick(String nick)
+	{
+		while (!Character.isAlphabetic(nick.charAt(0))) nick = nick.substring(1);
+		return nick;
 	}
 	
 	@Override
@@ -233,7 +252,7 @@ public final class MyBot extends PircBot
 	{
 		// Relay all my PMs to the channel OR for private message /msg
 		// Kristy_Bot PRIV [NAME] [MESSAGE]
-		if (sender.contains("ThePageMan"))
+		if (getRealNick(sender).equals("ThePageMan"))
 		{
 			String[] PMparts = message.split("\\s+");
 			// PM DOESN'T WORK YET
@@ -294,7 +313,7 @@ public final class MyBot extends PircBot
 	@Override
 	protected final void onOp(final String channel, final String sourceNick, final String sourceLogin, final String sourceHostname, final String recipient)
 	{
-		if (recipient.equalsIgnoreCase("&Kristyboi"))
+		if (getRealNick(recipient).equals("Kristyboi"))
 		{
 			final String[] sentences = new String[]
 			{
@@ -333,16 +352,15 @@ public final class MyBot extends PircBot
 	}
 
 	/**
-	 * Returns a random online user that isn't an admin or a mod
+	 * Returns a random online user that isn't blacklisted
 	 */
 	public final User getRandomUser()
 	{
 		final ArrayList<User> users = new ArrayList<User>(Arrays.asList(getUsers("#kristyboibets")));
 		for (int i = users.size() - 1; i >= 0; --i)
 		{
-			final String pref = users.get(i).getPrefix();
-			// TODO: Only registered users?
-			if (!pref.equals("+"))
+			final char prefix = getRealPref(users.get(i).getNick());
+			if (prefix == '~' || prefix == '&')
 			{
 				users.remove(i);
 				++i;
