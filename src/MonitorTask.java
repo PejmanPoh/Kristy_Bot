@@ -1,17 +1,10 @@
 import java.util.Date;
-import java.util.Properties;
-
 import javax.mail.Flags.Flag;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
-import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Store;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-
 import org.jibble.pircbot.Colors;
 
 final class MonitorTask extends Scheduler.Task
