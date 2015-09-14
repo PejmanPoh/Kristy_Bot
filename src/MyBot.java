@@ -55,7 +55,7 @@ public final class MyBot extends PircBot
 		Calendar date = Calendar.getInstance();
 		// date.set(Calendar.DAY_OF_WEEK, Calendar.TUESDAY);
 		if (date.get(Calendar.HOUR_OF_DAY) > 18) date.add(Calendar.DAY_OF_MONTH, 1);
-		date.set(Calendar.HOUR_OF_DAY, 18);
+		date.set(Calendar.HOUR_OF_DAY, 19);
 		date.set(Calendar.MINUTE, 30);
 		date.set(Calendar.SECOND, 0);
 		date.set(Calendar.MILLISECOND, 0);
@@ -110,6 +110,7 @@ public final class MyBot extends PircBot
 	private final void onCommand(final String channel, final String sender, final String message)
 	{
 		final String[] parts = message.substring(1).split(" ");
+		final User[] users = getUsers("#kristyboibets");
 		switch (parts[0])
 		{
 			case "accept":
@@ -126,7 +127,7 @@ public final class MyBot extends PircBot
 			case "update":
 				if (mon.getLastUpdate() == null) sendMessage(sender, "Sorry, couldn't detect most recent update.");
 				else if (channel != null) sendMessage(channel, sender + ": The last update was at " + mon.getLastUpdate().toString());
-				else sendMessage(channel, "The last update was at " + mon.getLastUpdate().toString());
+				else sendMessage(sender, "The last update was at " + mon.getLastUpdate().toString());
 				break;
 				
 			case "iwon":
@@ -158,11 +159,11 @@ public final class MyBot extends PircBot
 				break;
 				
 			case "hash":
-				if (sender.startsWith("~"))
+				if (sender.equals("ThePageMan"))
 				{
 					final String[] HASHparts = message.split("\\s+");
 					final String HASHuser = HASHparts[1];
-					final User[] users = getUsers("#kristyboibets");
+					
 
 					for (int i = 0; i < users.length; i++)
 					{
@@ -231,12 +232,14 @@ public final class MyBot extends PircBot
 	@Override
 	protected final void onPrivateMessage(final String sender, final String login, final String hostname, final String message)
 	{
+		
+		if (message.startsWith("!")) onCommand(null, sender, message.toLowerCase());
 		// Relay all my PMs to the channel OR for private message /msg
 		// Kristy_Bot PRIV [NAME] [MESSAGE]
-		if (sender.contains("ThePageMan"))
+		if (sender.equals("ThePageMan"))
 		{
 			String[] PMparts = message.split("\\s+");
-			// PM DOESN'T WORK YET
+			
 			if (message.startsWith("PRIV"))
 			{
 				String PMreceiver = PMparts[1];
@@ -251,8 +254,6 @@ public final class MyBot extends PircBot
 				sendMessage("#kristyboibets", PMmessage);
 			}
 		}
-		else if (message.startsWith("!")) onCommand(null, sender, message.toLowerCase());
-
 		// Relay all Bot PMs to ThePageMan because why not lel
 		sendMessage("ThePageMan", sender + ": " + message);
 	}
