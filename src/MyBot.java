@@ -175,10 +175,26 @@ public final class MyBot extends PircBot
 				else sendMessage(sender, "Access to command denied");
 				break;
 				
+			case "prefix":
+				final User u = getUserByNick(sender);
+				if (u != null) sendMessage(sender, "Your prefix is '" + u.getPrefix() + "' and your full name is '" + u.getNick() + "'.");
+				break;
+				
 			default:
 				sendMessage(sender, "Unknown command!");
 				break;
 		}
+	}
+	
+	/**
+	 * Fetch a User class instance for given nickname
+	 * @param nick The nickname to look up for
+	 */
+	private final User getUserByNick(final String nick)
+	{
+		final User[] usrs = getUsers("#kristyboibets");
+		for (final User u : usrs) if (u.getNick().equals(nick)) return u;
+		return null;
 	}
 	
 	@Override
