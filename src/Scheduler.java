@@ -140,8 +140,8 @@ public final class Scheduler extends Thread implements AutoCloseable
 		 */
 		private final boolean tick()
 		{
-			if (timeleft > 1) --timeleft;
-			else if (!started)
+			--timeleft;
+			if (timeleft < 1 && !started)
 			{
 				started = true;
 				return true;
