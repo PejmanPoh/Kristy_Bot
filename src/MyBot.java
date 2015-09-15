@@ -56,6 +56,7 @@ public final class MyBot extends PircBot
 	
 	private GiveawayTask gTask;
 	private MonitorTask mTask;
+	private TimertestTask tTask;
 	boolean exiting;
 	
 	MyBot(final String name)
@@ -225,6 +226,31 @@ public final class MyBot extends PircBot
 				{
 					sender.sendMessage("Exiting...");
 					disconnect();
+				}
+				else sender.sendMessage("Access to command denied!");
+				break;
+				
+			case "timertest":
+				if (sender.isUserAtLeast(Perm.OP))
+				{
+					if (parts.length > 2 && parts[1].equals("start"))
+					{
+						try
+						{
+							final int ticks = Integer.parseInt(parts[2]);
+							sched.addTask(tTask = new TimertestTask(ticks));
+							sender.sendMessage("Scheduler timer test task has started for " + ticks + " ticks.");
+						}
+						catch (final NumberFormatException ex)
+						{
+							sender.sendMessage("Command usage format: !timertest <start [ticks]|check>");
+						}
+					}
+					else if (parts.length > 1 && parts[1].equals("check"))
+					{
+						sender.sendMessage("Test results - elapsed time: " + tTask.getResult() + " millis per tick");
+					}
+					else sender.sendMessage("Command usage format: !timertest <start [ticks]|check>");
 				}
 				else sender.sendMessage("Access to command denied!");
 				break;
