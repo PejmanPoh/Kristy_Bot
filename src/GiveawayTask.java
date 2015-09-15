@@ -1,5 +1,6 @@
 import java.util.Calendar;
 import java.util.Properties;
+import java.util.Random;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -20,13 +21,16 @@ final class GiveawayTask extends Scheduler.Task
 	public String winner;
 	public int winnerHash;
 	
+	/** A static random number generator instance */
+	public static final Random rand = new Random();
+	
 	/**
 	 * @param inst The instance of MyBot
-	 * @param c Point in time of the first giveway to be scheduled
+	 * @param c Point in time of the first giveaway to be scheduled
 	 */
 	public GiveawayTask(final MyBot inst, final Calendar c)
 	{
-		super("giveaway", (int)((c.getTimeInMillis() - System.currentTimeMillis()) / 500));
+		super("giveaway", (int)((c.getTimeInMillis() - System.currentTimeMillis()) / 500) + rand.nextInt(28800));
 		bot = inst;
 		accepted = false;
 		winner = null;

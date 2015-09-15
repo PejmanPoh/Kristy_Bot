@@ -90,7 +90,7 @@ public final class MyBot extends PircBot
 		final Calendar date = Calendar.getInstance();
 		// date.set(Calendar.DAY_OF_WEEK, Calendar.TUESDAY);
 		if (date.get(Calendar.HOUR_OF_DAY) >= 18) date.add(Calendar.DAY_OF_MONTH, 1);
-		date.set(Calendar.HOUR_OF_DAY, 18);
+		date.set(Calendar.HOUR_OF_DAY, 19);
 		date.set(Calendar.MINUTE, 30);
 		date.set(Calendar.SECOND, 0);
 		date.set(Calendar.MILLISECOND, 0);
@@ -126,7 +126,7 @@ public final class MyBot extends PircBot
 					if (gTask.isWinner(getUserByNick(sender.nick)))
 					{
 						gTask.acceptReward();
-						sendMessage(Config.mainChannel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + gTask.winner + Colors.RED + "! Follow the instructions on the steam group page or type \"!IWON\" to find out how to collect your prize!");
+						sendMessage(Config.mainChannel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + gTask.winner + Colors.RED + "! Follow the instructions on the steam group page or type \"!iwon\" to find out how to collect your prize!");
 					}
 					else sender.sendMessage("You're not the winner of the current giveaway.");
 				}
