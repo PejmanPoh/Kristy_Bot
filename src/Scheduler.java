@@ -20,6 +20,16 @@ public final class Scheduler extends Thread implements AutoCloseable
 		start();
 	}
 	
+	/**
+	 * Returns tasks' state information
+	 */
+	public final String getTaskStatus()
+	{
+		String ret = "";
+		for (final Task t : tasks) ret += "\nTask '" + t.name + "' (ID " + t.ID + "): Next run in " + t.timeleft + " ticks / " + (t.timeleft * 500 / 60) + " minutes";
+		return ret;
+	}
+	
 	@Override
 	public final void run()
 	{
@@ -81,19 +91,22 @@ public final class Scheduler extends Thread implements AutoCloseable
 	public static abstract class Task implements Runnable
 	{
 		/** The unique task ID */
-		public final long ID;
+		public final int ID;
 		
+		public final String name;
 		private boolean started, completed;
 		private int timeleft;
 		
 		/**
 		 * Creates a new task to be executed after a specified delay
+		 * @param dname A display name for the task
 	     * @param time Delay in 500ms time units
 		 */
-		public Task(final int time)
+		public Task(final String dname, final int time)
 		{
-			ID = MyBot.rand.nextLong();
+			ID = MyBot.rand.nextInt();
 			timeleft = time;
+			name = dname;
 		}
 		
 		/**

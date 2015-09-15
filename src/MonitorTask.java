@@ -15,7 +15,7 @@ final class MonitorTask extends Scheduler.Task
 	
 	MonitorTask()
 	{
-		super(4);
+		super("email daemon", 4);
 		final Session session = Session.getInstance(System.getProperties(), null);
 		// session.setDebug(true);
 		try

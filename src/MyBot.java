@@ -38,7 +38,7 @@ public final class MyBot extends PircBot
 			"Beware the svv@y.",
 			"Type !commands into chat to see the bot's commands."
 		};
-		randMsgTask = sched.addTask(new Scheduler.Task(3600)
+		randMsgTask = sched.addTask(new Scheduler.Task("random msg", 3600)
 		{
 			@Override
 			public final void main()

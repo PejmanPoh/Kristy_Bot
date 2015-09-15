@@ -1,3 +1,5 @@
+import java.util.Scanner;
+
 public final class MyBotMain
 {
 	public static final void main(final String[] args)
@@ -20,6 +22,26 @@ public final class MyBotMain
 			
 			Config.log("Joining " + Config.mainChannel + "...");
 			bot.joinChannel(Config.mainChannel);
+			
+			try (final Scanner s = new Scanner(System.in))
+			{
+				String line;
+				while ((line = s.nextLine()) != null)
+				{
+					final String[] parts = line.toLowerCase().split(" ");
+					switch (parts[0])
+					{
+						case "exit":
+							Config.log("Exiting...");
+							bot.disconnect();
+							return;
+							
+						case "tasks":
+							Config.log("Current task list:" + bot.sched.getTaskStatus());
+							break;
+					}
+				}
+			}
 		}
 		catch (final Exception ex) { Config.log(ex); }
 	}
