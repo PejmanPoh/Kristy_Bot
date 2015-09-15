@@ -8,9 +8,10 @@ import java.util.Properties;
  */
 final class Config
 {
-	private static final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+	public static final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 	private static final Properties props = new Properties();
 	
+	/** Bot's operating channel */
 	public static final String mainChannel = "#kristyboibets";
 	
 	static
@@ -30,6 +31,11 @@ final class Config
 	static final void log(final String txt)
 	{
 		System.out.println('[' + format.format(new Date()) + "] " + txt);
+	}
+	
+	static final String format(final Date d)
+	{
+		return format.format(d);
 	}
 	
 	/**

@@ -52,7 +52,7 @@ public final class MyBot extends PircBot
 
 		Calendar date = Calendar.getInstance();
 		// date.set(Calendar.DAY_OF_WEEK, Calendar.TUESDAY);
-		if (date.get(Calendar.HOUR_OF_DAY) > 18) date.add(Calendar.DAY_OF_MONTH, 1);
+		if (date.get(Calendar.HOUR_OF_DAY) >= 18) date.add(Calendar.DAY_OF_MONTH, 1);
 		date.set(Calendar.HOUR_OF_DAY, 18);
 		date.set(Calendar.MINUTE, 30);
 		date.set(Calendar.SECOND, 0);
@@ -147,6 +147,11 @@ public final class MyBot extends PircBot
 				final User u = getUserByNick(parts.length > 1 ? parts[1] : sender);
 				if (u != null) sendMessage(sender, "Prefix is '" + u.getPrefix() + "' and full name is '" + u.getNick() + "'.");
 				else sendMessage(sender, "User not found.");
+				break;
+				
+			case "time":
+				final GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("Etc/GMT+1"));
+				sendMessage(sender, "Bot time is: " + Config.format(new Date()) + ", Kristyboi's time is: " + Config.format(gc.getTime()));
 				break;
 				
 			default:
