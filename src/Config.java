@@ -1,4 +1,6 @@
 import java.io.FileInputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
@@ -36,6 +38,11 @@ final class Config
 	static final String format(final Date d)
 	{
 		return format.format(d);
+	}
+	
+	public static final float round(final float value, final int places)
+	{
+	    return new BigDecimal(value).setScale(places, RoundingMode.HALF_UP).floatValue();
 	}
 	
 	/**

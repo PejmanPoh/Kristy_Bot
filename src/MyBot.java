@@ -127,6 +127,16 @@ public final class MyBot extends PircBot
 				sendMessage(sender, "If you have any ideas for future commands of the bot, " + "feel free to send a PM to ThePageMan. Just type \"/msg ThePageMan\" to send a PM.");
 				break;
 				
+			case "tasks":
+				if (getUserByNick(sender).isOp())
+				{
+					sendMessage(sender, "Current task list:");
+					for (final String line : sched.getTaskStatus().split("\n"))
+						sendMessage(sender, line);
+				}
+				else sendMessage(sender, "Access to command denied");
+				break;
+				
 			case "hash":
 				if (getRealNick(sender).equals("ThePageMan"))
 				{

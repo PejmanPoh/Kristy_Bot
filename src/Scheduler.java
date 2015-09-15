@@ -26,7 +26,7 @@ public final class Scheduler extends Thread implements AutoCloseable
 	public final String getTaskStatus()
 	{
 		String ret = "";
-		for (final Task t : tasks) ret += "\nTask '" + t.name + "' (ID " + t.ID + "): Next run in " + t.timeleft + " ticks / " + (t.timeleft * 500 / 60) + " minutes";
+		for (final Task t : tasks) ret += "\nTask '" + t.name + "' (ID " + t.ID + "): Next run in " + t.timeleft + " ticks / " + Config.round(t.timeleft / 30F, 2) + " minutes";
 		return ret;
 	}
 	
