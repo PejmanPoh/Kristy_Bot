@@ -50,7 +50,7 @@ public final class MyBot extends PircBot
 		
 		sched.addTask(mTask = new MonitorTask());
 
-		Calendar date = Calendar.getInstance();
+		final Calendar date = Calendar.getInstance();
 		// date.set(Calendar.DAY_OF_WEEK, Calendar.TUESDAY);
 		if (date.get(Calendar.HOUR_OF_DAY) >= 18) date.add(Calendar.DAY_OF_MONTH, 1);
 		date.set(Calendar.HOUR_OF_DAY, 18);
@@ -111,7 +111,7 @@ public final class MyBot extends PircBot
 				break;
 				
 			case "rank":
-				sendMessage(channel == null ? sender : channel, "Kristyboi is currently a Silver Elite (SE)");
+				sendMessage(channel == null ? sender : channel, "Kristyboi is currently a Supreme Analyst First Class.");
 				break;
 				
 			case "commands":
@@ -150,7 +150,7 @@ public final class MyBot extends PircBot
 				break;
 				
 			case "time":
-				final GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("Etc/GMT+1"));
+				final GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("Europe/Dublin"));
 				sendMessage(sender, "Bot time is: " + Config.format(new Date()) + ", Kristyboi's time is: " + Config.format(gc.getTime()));
 				break;
 				
