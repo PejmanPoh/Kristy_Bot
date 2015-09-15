@@ -225,7 +225,9 @@ public final class MyBot extends PircBot
 				if (sender.isUserAtLeast(Perm.OWNER))
 				{
 					sender.sendMessage("Exiting...");
+					if (parts.length > 1) quitServer(message.substring(6));
 					disconnect();
+					dispose();
 				}
 				else sender.sendMessage("Access to command denied!");
 				break;

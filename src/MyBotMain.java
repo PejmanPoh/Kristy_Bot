@@ -49,7 +49,7 @@ public final class MyBotMain
 				String line;
 				while (!bot.exiting && (line = s.nextLine()) != null)
 				{
-					bot.onCommand(null, console, line);
+					bot.onCommand(null, console, '!' + line);
 				}
 			}
 		}
