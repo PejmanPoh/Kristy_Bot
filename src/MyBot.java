@@ -9,6 +9,40 @@ import java.util.*;
 
 public final class MyBot extends PircBot
 {
+	/** Permission constants class */
+	public static final class Perm
+	{
+		public static final int NONE = 0, VOICE = 1, OP = 2, ADMIN = 3, OWNER = 4;
+	}
+	
+	public static class BotUser
+	{
+		final String nick;
+		
+		public BotUser(final String nickname)
+		{
+			nick = nickname;
+		}
+		
+		/**
+		 * Sends a message to the user
+		 * @param msg The message
+		 */
+		public void sendMessage(final String msg)
+		{
+			instance.sendMessage(nick, msg);
+		}
+		
+		/**
+		 * Checks if the user has a required permission level
+		 * @param permlvl The required permission level: {@link MyBot.Perm}
+		 */
+		public boolean isUserAtLeast(final int permlvl)
+		{
+			return instance.getPermLevel(nick) >= permlvl;
+		}
+	}
+	
 	/** A static main class instance */
 	public static MyBot instance;
 	
@@ -22,10 +56,12 @@ public final class MyBot extends PircBot
 	
 	private GiveawayTask gTask;
 	private MonitorTask mTask;
-
+	boolean exiting;
+	
 	MyBot(final String name)
 	{
 		instance = this;
+		exiting = false;
 		setName(name);
 		sched = new Scheduler();
 		
@@ -65,6 +101,7 @@ public final class MyBot extends PircBot
 	@Override
 	protected final void onDisconnect()
 	{
+		exiting = true;
 		sched.cancelTask(mTask.ID);
 		sched.cancelTask(gTask.ID);
 		sched.cancelTask(randMsgTask);
@@ -77,95 +114,123 @@ public final class MyBot extends PircBot
 	 * @param sender Message sender
 	 * @param message Message contents in lower-case
 	 */
-	private final void onCommand(final String channel, final String sender, final String message)
+	final void onCommand(final String channel, final BotUser sender, final String message)
 	{
 		final String[] parts = message.substring(1).split(" ");
-		final User[] users = getUsers(Config.mainChannel);
 		switch (parts[0])
 		{
 			case "accept":
-				if (gTask.isWinner(getUserByNick(sender)))
+				if (sender.isUserAtLeast(Perm.VOICE))
 				{
-					gTask.acceptReward();
-					sendMessage(Config.mainChannel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + gTask.winner + Colors.RED + "! Follow the instructions on the steam group page or type \"!IWON\" to find out how to collect your prize!");
+					if (gTask.isWinner(getUserByNick(sender.nick)))
+					{
+						gTask.acceptReward();
+						sendMessage(Config.mainChannel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + gTask.winner + Colors.RED + "! Follow the instructions on the steam group page or type \"!IWON\" to find out how to collect your prize!");
+					}
+					else sender.sendMessage("You're not the winner of the current giveaway.");
 				}
-				else sendMessage(sender, "You're not the winner of the current giveaway.");
+				else sender.sendMessage("Access to command denied!");
 				break;
 				
 			case "update":
 				final Date upd = mTask.getLastUpdate();
-				if (upd == null) sendMessage(sender, "Sorry, couldn't detect most recent update.");
-				else if (channel != null) sendMessage(channel, sender + ": The last update was at " + upd.toString());
-				else sendMessage(sender, "The last update was at " + upd.toString());
+				if (upd == null) sender.sendMessage("Sorry, couldn't detect most recent update.");
+				else if (channel != null) sendMessage(channel, sender.nick + ": The last update was at " + upd.toString());
+				else sender.sendMessage("The last update was at " + upd.toString());
 				break;
 				
 			case "iwon":
-				if (channel != null) sendMessage(channel, sender + ": Check your PMs!");
-				sendMessage(sender, "                       ***CONGRATULATIONS ***");
-				sendMessage(sender, "SO you won the giveaway? Nice! To claim your prize, please follow these instructions.");
-				sendMessage(sender, "   1. Screenshot the message that Kristy_Bot announces which has your name in it.");
-				sendMessage(sender, "   2. Post the screenshot in a new thread with a title like \"I won an IRC giveaway! 10/9/2015\" ");
-				sendMessage(sender, "   3. I will contact you and meet you in the IRC again, and you must give me your trade link. ");
-				sendMessage(sender, "   4. Wait for Kristyboi or myself to send you the redline.");
-				sendMessage(sender, "   5. Enjoy the redline!");
+				if (channel != null) sendMessage(channel, sender.nick + ": Check your PMs!");
+				sender.sendMessage("                       ***CONGRATULATIONS ***");
+				sender.sendMessage("SO you won the giveaway? Nice! To claim your prize, please follow these instructions.");
+				sender.sendMessage("   1. Screenshot the message that Kristy_Bot announces which has your name in it.");
+				sender.sendMessage("   2. Post the screenshot in a new thread with a title like \"I won an IRC giveaway! 10/9/2015\" ");
+				sender.sendMessage("   3. I will contact you and meet you in the IRC again, and you must give me your trade link. ");
+				sender.sendMessage("   4. Wait for Kristyboi or myself to send you the redline.");
+				sender.sendMessage("   5. Enjoy the redline!");
 				break;
 				
 			case "rank":
-				sendMessage(channel == null ? sender : channel, "Kristyboi is currently a Supreme Analyst First Class.");
+				if (channel == null) sender.sendMessage("Kristyboi is currently a Supreme Analyst First Class.");
+				else sendMessage(channel, "Kristyboi is currently a Supreme Analyst First Class.");
 				break;
 				
 			case "commands":
-				if (channel != null) sendMessage(channel, sender + ": Check your PMs!");
-				sendMessage(sender, "               *** Welcome to Kristy_Bot ***");
-				sendMessage(sender, "              *** Current list of commands ***");
-				sendMessage(sender, Colors.BLUE + "!update" + Colors.NORMAL + " :- Show the [DATE & TIME] of the most recent spreadsheet update.");
-				sendMessage(sender, Colors.BLUE + "!rank" + Colors.NORMAL + " :- To see Kristyboi's current rank.");
-				sendMessage(sender, Colors.BLUE + "qq [NAME]" + Colors.NORMAL + " :- To send the user a place to cry to.");
-				sendMessage(sender, " ");
-				sendMessage(sender, "Also another helpful command not related to the bot is " + "\"/msg NickServ Register [PASSWORD] [EMAIL]\". " + "This command allows you to register your nickname so that you can claim it. " + "Type \"/msg NickServ help\" for the full list of commands. " + "You can kick people off your username automatically after 60 seconds " + "among other useful features.");
-				sendMessage(sender, " ");
-				sendMessage(sender, "If you have any ideas for future commands of the bot, " + "feel free to send a PM to ThePageMan. Just type \"/msg ThePageMan\" to send a PM.");
+				if (channel != null) sendMessage(channel, sender.nick + ": Check your PMs!");
+				sender.sendMessage("               *** Welcome to Kristy_Bot ***");
+				sender.sendMessage("              *** Current list of commands ***");
+				sender.sendMessage(Colors.BLUE + "!update" + Colors.NORMAL + " :- Show the [DATE & TIME] of the most recent spreadsheet update.");
+				sender.sendMessage(Colors.BLUE + "!rank" + Colors.NORMAL + " :- To see Kristyboi's current rank.");
+				sender.sendMessage(Colors.BLUE + "qq [NAME]" + Colors.NORMAL + " :- To send the user a place to cry to.");
+				sender.sendMessage(" ");
+				sender.sendMessage("Also another helpful command not related to the bot is " + "\"/msg NickServ Register [PASSWORD] [EMAIL]\". " + "This command allows you to register your nickname so that you can claim it. " + "Type \"/msg NickServ help\" for the full list of commands. " + "You can kick people off your username automatically after 60 seconds " + "among other useful features.");
+				sender.sendMessage(" ");
+				sender.sendMessage("If you have any ideas for future commands of the bot, " + "feel free to send a PM to ThePageMan. Just type \"/msg ThePageMan\" to send a PM.");
 				break;
 				
 			case "tasks":
-				if (getUserByNick(sender).isOp())
+				if (sender.isUserAtLeast(Perm.OP))
 				{
-					sendMessage(sender, "Current task list:");
+					sender.sendMessage("Current task list:");
 					for (final String line : sched.getTaskStatus().split("\n"))
-						sendMessage(sender, line);
+						sender.sendMessage(line);
 				}
-				else sendMessage(sender, "Access to command denied");
+				else sender.sendMessage("Access to command denied!");
 				break;
 				
 			case "hash":
-				if (getRealNick(sender).equals("ThePageMan"))
+				if (sender.isUserAtLeast(Perm.OP))
 				{
-					final String[] HASHparts = message.split("\\s+");
-					final String HASHuser = HASHparts[1];
-					for (int i = 0; i < users.length; i++)
-					{
-						if (users[i].getNick().equalsIgnoreCase(HASHuser))
-						{
-							sendMessage(sender, "Hashcode of " + users[i].getNick() + ": " + users[i].hashCode());
-						}
-					}
+					final User u = getUserByNick(parts[1]);
+					if (u != null) sender.sendMessage("Hashcode of " + u.getNick() + ": " + u.hashCode());
+					else sender.sendMessage("User not found!");
 				}
-				else sendMessage(sender, "Access to command denied");
+				else sender.sendMessage("Access to command denied!");
 				break;
 				
 			case "prefix":
-				final User u = getUserByNick(parts.length > 1 ? parts[1] : sender);
-				if (u != null) sendMessage(sender, "Prefix is '" + u.getPrefix() + "' and full name is '" + u.getNick() + "'.");
-				else sendMessage(sender, "User not found.");
+				if (parts.length > 1)
+				{
+					final User u = getUserByNick(parts[1]);
+					if (u != null) sender.sendMessage("Prefix is '" + u.getPrefix() + "' and full name is '" + u.getNick() + "'.");
+					else sender.sendMessage("User not found!");
+				}
+				else sender.sendMessage("Command usage format: !prefix [nick]");
 				break;
 				
 			case "time":
 				final GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("Europe/Dublin"));
-				sendMessage(sender, "Bot time is: " + Config.format(new Date()) + ", Kristyboi's time is: " + Config.format(gc.getTime()));
+				sender.sendMessage("Bot time is: " + Config.format(new Date()) + ", Kristyboi's time is: " + Config.format(gc.getTime()));
+				break;
+				
+			case "priv":
+				if (sender.isUserAtLeast(Perm.ADMIN))
+				{
+					if (parts.length > 2) sendMessage(parts[1], message.substring(6 + parts[1].length()));
+					else sender.sendMessage("Command usage format: !priv [nick] [message]");
+				}
+				else sender.sendMessage("Access to command denied!");
+				break;
+				
+			case "pub":
+				if (sender.isUserAtLeast(Perm.ADMIN))
+				{
+					sendMessage(Config.mainChannel, message.substring(4));
+				}
+				else sender.sendMessage("Access to command denied!");
+				break;
+				
+			case "exit":
+				if (sender.isUserAtLeast(Perm.OWNER))
+				{
+					sender.sendMessage("Exiting...");
+					disconnect();
+				}
+				else sender.sendMessage("Access to command denied!");
 				break;
 				
 			default:
-				sendMessage(sender, "Unknown command!");
+				sender.sendMessage("Unknown command!");
 				break;
 		}
 	}
@@ -183,13 +248,24 @@ public final class MyBot extends PircBot
 	}
 	
 	/**
-	 * Returns special permission indicator character for given User
+	 * Returns permission level of an user
 	 */
-	private final String getRealPref(final User u)
+	private final int getPermLevel(final String nick)
 	{
-		final String name = u.getPrefix() + u.getNick();
-		return name.substring(0, name.length() - getRealNick(name).length());
-		
+		return getPermLevel(getUserByNick(nick));
+	}
+	
+	/**
+	 * Returns permission level of an User
+	 */
+	private final int getPermLevel(final User u)
+	{
+		final String full = u.getPrefix() + u.getNick();
+		if (full.indexOf('~') != -1) return Perm.OWNER;
+		else if (full.indexOf('&') != -1) return Perm.ADMIN;
+		else if (full.indexOf('@') != -1) return Perm.OP;
+		else if (full.indexOf('+') != -1) return Perm.VOICE;
+		else return Perm.NONE;
 	}
 	
 	/**
@@ -210,7 +286,7 @@ public final class MyBot extends PircBot
 	protected final void onMessage(final String channel, final String sender, final String login, final String hostname, final String message)
 	{
 		final String msgLower = message.toLowerCase();
-		if (msgLower.startsWith("!")) onCommand(channel, sender, msgLower);
+		if (msgLower.startsWith("!")) onCommand(channel, new BotUser(getRealNick(sender)), msgLower);
 		else if (msgLower.contains("rip") && msgLower.contains("skin") || msgLower.equals("qq"))
 		{
 			sendMessage(channel, sender + ": http://how.icryeverytime.com");
@@ -240,25 +316,8 @@ public final class MyBot extends PircBot
 	@Override
 	protected final void onPrivateMessage(final String sender, final String login, final String hostname, final String message)
 	{
-		if (message.startsWith("!")) onCommand(null, sender, message.toLowerCase());
-		else if (getRealNick(sender).equals("ThePageMan"))
-		{
-			final String[] PMparts = message.split("\\s+");
-			// Kristy_Bot PRIV [NAME] [MESSAGE]
-			if (message.startsWith("PRIV"))
-			{
-				String PMreceiver = PMparts[1];
-				String PMmessage = message.substring(5 + PMparts[1].length());
-				sendMessage(PMreceiver, PMmessage);
-			}
-			// /msg Kristy_Bot PUB [MESSAGE]
-			else if (message.startsWith("PUB"))
-			{
-				String PMmessage = message.substring(4);
-				sendMessage(Config.mainChannel, PMmessage);
-			}
-		}
-		// Relay all Bot PMs to ThePageMan because why not lel
+		if (message.startsWith("!")) onCommand(null, new BotUser(sender), message.toLowerCase());
+		// Relay all other Bot PMs to ThePageMan because why not lel
 		else sendMessage("ThePageMan", sender + ": " + message);
 	}
 
@@ -345,8 +404,7 @@ public final class MyBot extends PircBot
 		final ArrayList<User> users = new ArrayList<User>(Arrays.asList(getUsers(Config.mainChannel)));
 		for (int i = users.size() - 1; i >= 0; --i)
 		{
-			final String prefix = getRealPref(users.get(i));
-			if (prefix.contains("~") || prefix.contains("&"))
+			if (getPermLevel(users.get(i)) >= Perm.ADMIN)
 			{
 				users.remove(i);
 				++i;

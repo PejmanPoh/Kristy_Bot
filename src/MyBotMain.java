@@ -2,6 +2,27 @@ import java.util.Scanner;
 
 public final class MyBotMain
 {
+	private static final MyBot.BotUser console = new MyBot.BotUser("~")
+	{
+		/**
+		 * Prints a message to the standard output
+		 */
+		@Override
+		public final void sendMessage(final String msg)
+		{
+			Config.log("IRC: " + msg);
+		}
+		
+		/**
+		 * Console user has all permissions possible
+		 */
+		@Override
+		public final boolean isUserAtLeast(final int permlvl)
+		{
+			return true;
+		}
+	};
+	
 	public static final void main(final String[] args)
 	{
 		try
@@ -26,20 +47,9 @@ public final class MyBotMain
 			try (final Scanner s = new Scanner(System.in))
 			{
 				String line;
-				while ((line = s.nextLine()) != null)
+				while (!bot.exiting && (line = s.nextLine()) != null)
 				{
-					final String[] parts = line.toLowerCase().split(" ");
-					switch (parts[0])
-					{
-						case "exit":
-							Config.log("Exiting...");
-							bot.disconnect();
-							return;
-							
-						case "tasks":
-							Config.log("Current task list:" + bot.sched.getTaskStatus());
-							break;
-					}
+					bot.onCommand(null, console, line);
 				}
 			}
 		}
