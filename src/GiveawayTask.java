@@ -1,12 +1,6 @@
-import java.util.Calendar;
 import java.util.Properties;
-import java.util.Random;
 
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
+import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
@@ -15,19 +9,15 @@ import org.jibble.pircbot.User;
 
 final class GiveawayTask extends Scheduler.Task
 {
-	private final MyBot bot;
+	private static final MyBot bot = MyBot.instance;
 	
 	public boolean accepted;
 	public String winner;
 	public int winnerHash;
-	/**
-	 * @param inst The instance of MyBot
-	 * @param c Point in time of the first giveaway to be scheduled
-	 */
-	public GiveawayTask(final MyBot inst, final Calendar c)
+
+	public GiveawayTask(final int time)
 	{
-		super("giveaway", (int)((c.getTimeInMillis() - System.currentTimeMillis()) / 500) + MyBot.rand.nextInt(28800));
-		bot = inst;
+		super("giveaway", time);
 		accepted = false;
 		winner = null;
 		winnerHash = 0;
@@ -37,7 +27,7 @@ final class GiveawayTask extends Scheduler.Task
 	public final void main()
 	{
 		final Scheduler.Task giveawayTask = this;
-		final User u = MyBot.instance.getRandomUser();
+		final User u = bot.getRandomUser();
 		winner = u.getNick();
 		winnerHash = u.hashCode();
 		Config.log("Giveaway winner chosen: " + winner);

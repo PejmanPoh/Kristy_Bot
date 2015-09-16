@@ -86,6 +86,8 @@ public final class MyBot extends PircBot
 		});
 		
 		sched.addTask(mTask = new MonitorTask());
+		
+		gTask = null;
 	}
 
 	@Override
@@ -254,8 +256,9 @@ public final class MyBot extends PircBot
 						try
 						{
 							final int minutes = Integer.parseInt(parts[1]);
-							gTask.reschedule(minutes * 120);
-							sender.sendMessage("The giveaway has been rescheduled to run in " + minutes + " minutes.");
+							sender.sendMessage("Giveaway " + (gTask == null ? "" : "re") + "scheduled to run in " + minutes + " minutes.");
+							if (gTask == null) gTask = new GiveawayTask(minutes * 120);
+							else gTask.reschedule(minutes * 120);
 						}
 						catch (final NumberFormatException ex)
 						{
