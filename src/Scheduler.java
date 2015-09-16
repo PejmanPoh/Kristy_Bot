@@ -79,6 +79,7 @@ public final class Scheduler extends Thread implements AutoCloseable
 				return;
 			}
 		}
+		Config.log(new Exception("Tried to cancel task with ID " + id + ", which doesn't exist"));
 	}
 	
 	@Override
@@ -111,6 +112,12 @@ public final class Scheduler extends Thread implements AutoCloseable
 			name = dname;
 			started = false;
 			completed = false;
+		}
+		
+		@Override
+		public final boolean equals(final Object o)
+		{
+			return o instanceof Task && ((Task)o).ID == ID;
 		}
 		
 		/**

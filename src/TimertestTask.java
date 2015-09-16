@@ -1,5 +1,5 @@
 
-public final class TimertestTask extends Scheduler.Task
+final class TimertestTask extends Scheduler.Task
 {
 	final int ticks;
 	final long start;

@@ -195,7 +195,7 @@ public final class MyBot extends PircBot
 			case "pub":
 				if (sender.isUserAtLeast(Perm.ADMIN))
 				{
-					sendMessage(Config.mainChannel, message.substring(4));
+					sendMessage(Config.mainChannel, message.substring(5));
 				}
 				else sender.sendMessage("Access to command denied!");
 				break;
@@ -256,6 +256,31 @@ public final class MyBot extends PircBot
 						}
 					}
 					else sender.sendMessage("Command usage format: !giveaway [minutes]");
+				}
+				else sender.sendMessage("Access to command denied!");
+				break;
+				
+			case "debug":
+				if (sender.isUserAtLeast(Perm.OP))
+				{
+					if (parts.length > 2 && parts[1].equals("field"))
+					{
+						try
+						{
+							final String[] obj = parts[1].split(".");
+							Object o = this;
+							for (int i = 0; i < obj.length; ++i)
+							{
+								o = o.getClass().getDeclaredField(obj[i]).get(o);
+							}
+							sender.sendMessage("DEBUG Value of field '" + parts[1] + "': " + String.valueOf(o));
+						}
+						catch (final Exception ex)
+						{
+							sender.sendMessage("DEBUG Error occurred: " + ex.getMessage());
+						}
+					}
+					else sender.sendMessage("Command usage format: <CLASSIFIED>");
 				}
 				else sender.sendMessage("Access to command denied!");
 				break;
