@@ -267,7 +267,7 @@ public final class MyBot extends PircBot
 					{
 						try
 						{
-							final String[] obj = parts[2].split(".");
+							final String[] obj = parts[2].split("\\.");
 							Object o = this;
 							for (int i = 0; i < obj.length; ++i)
 							{
