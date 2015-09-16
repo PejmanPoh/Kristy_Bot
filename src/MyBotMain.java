@@ -1,4 +1,5 @@
-import java.util.Scanner;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 public final class MyBotMain
 {
@@ -44,12 +45,12 @@ public final class MyBotMain
 			Config.log("Joining " + Config.mainChannel + "...");
 			bot.joinChannel(Config.mainChannel);
 			
-			try (final Scanner s = new Scanner(System.in))
+			try (final BufferedReader br = new BufferedReader(new InputStreamReader(System.in)))
 			{
-				String line;
-				while (!bot.exiting && (line = s.nextLine()) != null)
+				while (!bot.exiting)
 				{
-					bot.onCommand(null, console, '!' + line);
+					if (br.ready()) bot.onCommand(null, console, '!' + br.readLine());
+					else Thread.sleep(500);
 				}
 			}
 		}

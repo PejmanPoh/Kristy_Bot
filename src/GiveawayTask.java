@@ -11,6 +11,8 @@ final class GiveawayTask extends Scheduler.Task
 {
 	private static final MyBot bot = MyBot.instance;
 	
+	private int acceptorTask;
+	
 	public boolean accepted;
 	public String winner;
 	public int winnerHash;
@@ -32,7 +34,7 @@ final class GiveawayTask extends Scheduler.Task
 		winnerHash = u.hashCode();
 		Config.log("Giveaway winner chosen: " + winner);
 		bot.sendMessage(Config.mainChannel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.NORMAL + Colors.PURPLE + u.getNick() + Colors.RED + "! You have been randomly selected to win an " + Colors.PURPLE + "AK-47 | Redline FT" + Colors.RED + "! Type \"!accept\" in the next" + Colors.BLUE + " 30 minutes" + Colors.RED + " to claim your prize or another winner will be chosen.");
-		bot.sched.addTask(new Scheduler.Task("giveaway acceptor", 3600)
+		acceptorTask = bot.sched.addTask(new Scheduler.Task("giveaway acceptor", 3600)
 		{
 			@Override
 			public final void main()
@@ -61,6 +63,8 @@ final class GiveawayTask extends Scheduler.Task
 	final void acceptReward()
 	{
 		accepted = true;
+		bot.sched.cancelTask(acceptorTask);
+		
 		final String username = Config.get("GMAIL");
 		final String password = Config.get("GMAILpw");
 

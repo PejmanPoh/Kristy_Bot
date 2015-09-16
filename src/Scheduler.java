@@ -57,7 +57,7 @@ public final class Scheduler extends Thread implements AutoCloseable
 	 * @param t The task to execute
 	 * @return An unique task ID
 	 */
-	public final long addTask(final Task t)
+	public final int addTask(final Task t)
 	{
 		tasks.add(t);
 		return t.ID;

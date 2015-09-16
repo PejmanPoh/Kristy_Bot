@@ -52,8 +52,6 @@ public final class MyBot extends PircBot
 	/** A task scheduler instance */
 	public final Scheduler sched;
 	
-	private long randMsgTask;
-	
 	private GiveawayTask gTask;
 	private MonitorTask mTask;
 	private TimertestTask tTask;
@@ -75,7 +73,7 @@ public final class MyBot extends PircBot
 			"Beware the svv@y.",
 			"Type !commands into chat to see the bot's commands."
 		};
-		randMsgTask = sched.addTask(new Scheduler.Task("random msg", 3600)
+		sched.addTask(new Scheduler.Task("random msg", 3600)
 		{
 			@Override
 			public final void main()
@@ -88,16 +86,6 @@ public final class MyBot extends PircBot
 		sched.addTask(mTask = new MonitorTask());
 		
 		gTask = null;
-	}
-
-	@Override
-	protected final void onDisconnect()
-	{
-		exiting = true;
-		sched.cancelTask(mTask.ID);
-		sched.cancelTask(gTask.ID);
-		sched.cancelTask(randMsgTask);
-		sched.close();
 	}
 	
 	/**
@@ -216,6 +204,8 @@ public final class MyBot extends PircBot
 				if (sender.isUserAtLeast(Perm.OWNER))
 				{
 					sender.sendMessage("Exiting...");
+					exiting = true;
+					sched.close();
 					if (parts.length > 1) quitServer(message.substring(6));
 					disconnect();
 					dispose();
@@ -438,7 +428,7 @@ public final class MyBot extends PircBot
 	}
 
 	/**
-	 * Returns a random online user that isn't blacklisted
+	 * Returns a random online user that isn't an admin
 	 */
 	public final User getRandomUser()
 	{
