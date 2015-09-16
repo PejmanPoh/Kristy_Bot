@@ -257,6 +257,27 @@ public final class MyBot extends PircBot
 				else sender.sendMessage("Access to command denied!");
 				break;
 				
+			case "giveaway":
+				if (sender.isUserAtLeast(Perm.ADMIN))
+				{
+					if (parts.length > 1)
+					{
+						try
+						{
+							final int minutes = Integer.parseInt(parts[1]);
+							gTask.reschedule(minutes * 120);
+							sender.sendMessage("The giveaway has been rescheduled to run in " + minutes + " minutes.");
+						}
+						catch (final NumberFormatException ex)
+						{
+							sender.sendMessage("Command usage format: !giveaway [minutes]");
+						}
+					}
+					else sender.sendMessage("Command usage format: !giveaway [minutes]");
+				}
+				else sender.sendMessage("Access to command denied!");
+				break;
+				
 			default:
 				sender.sendMessage("Unknown command!");
 				break;

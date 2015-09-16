@@ -116,7 +116,6 @@ public final class Scheduler extends Thread implements AutoCloseable
 		public void run()
 		{
 			main();
-			if (timeleft < 1) completed = true;
 		}
 		
 		/**
@@ -132,6 +131,14 @@ public final class Scheduler extends Thread implements AutoCloseable
 		{
 			timeleft = time;
 			started = false;
+			/*
+			TODO: Should the Scheduler model allow this? 
+			if (completed)
+			{
+				completed = false;
+				if (!tasks.contains(this)) tasks.add(this);
+			}
+			*/
 		}
 		
 		/**
@@ -140,14 +147,19 @@ public final class Scheduler extends Thread implements AutoCloseable
 		 */
 		private final boolean tick()
 		{
-			--timeleft;
-			if (timeleft < 1 && !started)
+			if (timeleft > 0) --timeleft;
+			else if (!started)
 			{
 				started = true;
 				return true;
 			}
 			return false;
 		}
+		
+		/**
+		 * Sets a one-time flag, which marks the task as ready to remove
+		 */
+		public final void setCompleted() { completed = true; }
 		
 		/**
 		 * Checks whenever this task has finished and hasn't been rescheduled

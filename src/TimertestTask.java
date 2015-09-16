@@ -17,6 +17,7 @@ public final class TimertestTask extends Scheduler.Task
 	public final void main()
 	{
 		end = System.nanoTime();
+		setCompleted();
 	}
 	
 	/**

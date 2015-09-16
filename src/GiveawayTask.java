@@ -20,17 +20,13 @@ final class GiveawayTask extends Scheduler.Task
 	public boolean accepted;
 	public String winner;
 	public int winnerHash;
-	
-	/** A static random number generator instance */
-	public static final Random rand = new Random();
-	
 	/**
 	 * @param inst The instance of MyBot
 	 * @param c Point in time of the first giveaway to be scheduled
 	 */
 	public GiveawayTask(final MyBot inst, final Calendar c)
 	{
-		super("giveaway", (int)((c.getTimeInMillis() - System.currentTimeMillis()) / 500) + rand.nextInt(28800));
+		super("giveaway", (int)((c.getTimeInMillis() - System.currentTimeMillis()) / 500) + MyBot.rand.nextInt(28800));
 		bot = inst;
 		accepted = false;
 		winner = null;
@@ -59,6 +55,7 @@ final class GiveawayTask extends Scheduler.Task
 					// Pick another user in 25-50 seconds, will override the reschedule below
 					giveawayTask.reschedule(50);
 				}
+				setCompleted();
 			}
 		});
 		// Pick another user in 20-28 hours
