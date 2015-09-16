@@ -267,13 +267,13 @@ public final class MyBot extends PircBot
 					{
 						try
 						{
-							final String[] obj = parts[1].split(".");
+							final String[] obj = parts[2].split(".");
 							Object o = this;
 							for (int i = 0; i < obj.length; ++i)
 							{
 								o = o.getClass().getDeclaredField(obj[i]).get(o);
 							}
-							sender.sendMessage("DEBUG Value of field '" + parts[1] + "': " + String.valueOf(o));
+							sender.sendMessage("DEBUG Value of field '" + parts[2] + "': " + String.valueOf(o));
 						}
 						catch (final Exception ex)
 						{
