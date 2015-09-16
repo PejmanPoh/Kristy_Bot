@@ -86,17 +86,6 @@ public final class MyBot extends PircBot
 		});
 		
 		sched.addTask(mTask = new MonitorTask());
-
-		final Calendar date = Calendar.getInstance();
-		// date.set(Calendar.DAY_OF_WEEK, Calendar.TUESDAY);
-//		if (date.get(Calendar.HOUR_OF_DAY) >= 18) date.add(Calendar.DAY_OF_MONTH, 1);
-		date.set(Calendar.HOUR_OF_DAY, 19);
-		date.set(Calendar.MINUTE, 15);
-		date.set(Calendar.SECOND, 0);
-		date.set(Calendar.MILLISECOND, 0);
-		
-		//Begin the giveaway system at 'date'
-		sched.addTask(gTask = new GiveawayTask(this, date));
 	}
 
 	@Override

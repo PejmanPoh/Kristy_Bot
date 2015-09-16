@@ -58,8 +58,6 @@ final class GiveawayTask extends Scheduler.Task
 				setCompleted();
 			}
 		});
-		// Pick another user in 20-28 hours
-		//reschedule(144000 + rand.nextInt(57600));
 	}
 	
 	/**
