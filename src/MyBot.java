@@ -249,7 +249,7 @@ public final class MyBot extends PircBot
 				break;
 				
 			case "giveaway":
-				if (sender.isUserAtLeast(Perm.ADMIN))
+				if (sender.isUserAtLeast(Perm.OWNER))
 				{
 					if (parts.length > 1)
 					{
