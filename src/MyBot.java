@@ -257,7 +257,7 @@ public final class MyBot extends PircBot
 						{
 							final int minutes = Integer.parseInt(parts[1]);
 							sender.sendMessage("Giveaway " + (gTask == null ? "" : "re") + "scheduled to run in " + minutes + " minutes.");
-							if (gTask == null) gTask = new GiveawayTask(minutes * 120);
+							if (gTask == null) sched.addTask(gTask = new GiveawayTask(minutes * 120));
 							else gTask.reschedule(minutes * 120);
 						}
 						catch (final NumberFormatException ex)

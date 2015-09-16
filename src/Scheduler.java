@@ -90,6 +90,8 @@ public final class Scheduler extends Thread implements AutoCloseable
 	
 	public static abstract class Task implements Runnable
 	{
+		private static int nID = -1;
+		
 		/** The unique task ID */
 		public final int ID;
 		
@@ -104,9 +106,11 @@ public final class Scheduler extends Thread implements AutoCloseable
 		 */
 		public Task(final String dname, final int time)
 		{
-			ID = MyBot.rand.nextInt();
+			ID = ++nID;
 			timeleft = time;
 			name = dname;
+			started = false;
+			completed = false;
 		}
 		
 		/**
