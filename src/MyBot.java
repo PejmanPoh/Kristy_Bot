@@ -12,7 +12,7 @@ public final class MyBot extends PircBot
 	/** Permission constants class */
 	public static final class Perm
 	{
-		public static final int NONE = 0, VOICE = 1, OP = 2, ADMIN = 3, OWNER = 4, CONSOLE = 5;
+		public static final int NONE = 0, VOICE = 1, HALFOP = 2, OP = 3, ADMIN = 4, OWNER = 5, CONSOLE = 6;
 		
 		public static final String getName(final int permlvl)
 		{
@@ -20,6 +20,7 @@ public final class MyBot extends PircBot
 			{
 				case NONE: return "Normal";
 				case VOICE: return "Voice";
+				case HALFOP: return "Half-OP";
 				case OP: return "OP";
 				case ADMIN: return "Admin";
 				case OWNER: return "Owner";
@@ -114,7 +115,7 @@ public final class MyBot extends PircBot
 					try
 					{
 						final String[] obj = args[1].split("\\.");
-						Object o = this;
+						Object o = instance;
 						for (int i = 0; i < obj.length; ++i)
 						{
 							o = o.getClass().getDeclaredField(obj[i]).get(o);
@@ -325,6 +326,7 @@ public final class MyBot extends PircBot
 		if (full.indexOf('~') != -1) return Perm.OWNER;
 		else if (full.indexOf('&') != -1) return Perm.ADMIN;
 		else if (full.indexOf('@') != -1) return Perm.OP;
+		else if (full.indexOf('%') != -1) return Perm.HALFOP;
 		else if (full.indexOf('+') != -1) return Perm.VOICE;
 		else return Perm.NONE;
 	}
@@ -335,7 +337,7 @@ public final class MyBot extends PircBot
 	private final String getRealNick(String nick)
 	{
 		char c = nick.charAt(0);
-		while (c == '~' || c == '@' || c == '&' || c == '+')
+		while (c == '~' || c == '@' || c == '&' || c == '+' || c == '%')
 		{
 			nick = nick.substring(1);
 			c = nick.charAt(0);
