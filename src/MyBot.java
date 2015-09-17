@@ -124,7 +124,7 @@ public final class MyBot extends PircBot
 					}
 					catch (final Exception ex)
 					{
-						user.sendMessage("DEBUG Error occurred: " + ex.getMessage());
+						user.sendMessage("DEBUG " + ex.getClass().getSimpleName() + " occurred: " + ex.getMessage());
 					}
 				}
 				else sendUsageInfo(user);
@@ -285,7 +285,7 @@ public final class MyBot extends PircBot
 	 */
 	final void onCommand(final BotUser sender, final String message)
 	{
-		final String[] parts = message.toLowerCase().substring(1).split(" ", 2);
+		final String[] parts = message.substring(1).split(" ", 2);
 		for (final Command c : cmds)
 			if (c.name.equals(parts[0]))
 			{
