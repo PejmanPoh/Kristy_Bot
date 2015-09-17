@@ -12,36 +12,24 @@ public final class MyBot extends PircBot
 	/** Permission constants class */
 	public static final class Perm
 	{
-		public static final int NONE = 0, VOICE = 1, OP = 2, ADMIN = 3, OWNER = 4;
+		public static final int NONE = 0, VOICE = 1, OP = 2, ADMIN = 3, OWNER = 4, CONSOLE = 5;
+		
+		public static final String getName(final int permlvl)
+		{
+			switch (permlvl)
+			{
+				case NONE: return "Normal";
+				case VOICE: return "Voice";
+				case OP: return "OP";
+				case ADMIN: return "Admin";
+				case OWNER: return "Owner";
+				case CONSOLE: return "Console";
+				default: return "Unknown";
+			}
+		}
 	}
 	
-	public static class BotUser
-	{
-		final String nick;
-		
-		public BotUser(final String nickname)
-		{
-			nick = nickname;
-		}
-		
-		/**
-		 * Sends a message to the user
-		 * @param msg The message
-		 */
-		public void sendMessage(final String msg)
-		{
-			instance.sendMessage(nick, msg);
-		}
-		
-		/**
-		 * Checks if the user has a required permission level
-		 * @param permlvl The required permission level: {@link MyBot.Perm}
-		 */
-		public boolean isUserAtLeast(final int permlvl)
-		{
-			return instance.getPermLevel(nick) >= permlvl;
-		}
-	}
+	private static final LinkedList<Command> cmds = new LinkedList<Command>();
 	
 	/** A static main class instance */
 	public static MyBot instance;
@@ -86,219 +74,226 @@ public final class MyBot extends PircBot
 		sched.addTask(mTask = new MonitorTask());
 		
 		gTask = null;
+		
+		cmds.add(new Command("accept", Perm.VOICE, "", "Accepts the giveaway award")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				if (gTask.isWinner(getUserByNick(user.nick)))
+				{
+					gTask.acceptReward();
+					sendMessage(Config.mainChannel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + gTask.winner + Colors.RED + "! Follow the instructions on the steam group page or type \"!iwon\" to find out how to collect your prize!");
+				}
+				else user.sendMessage("You're not the winner of the current giveaway.");
+			}
+		});
+		
+		cmds.add(new Command("commands", Perm.NONE, "", "Displays the list of commands")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				user.sendFromChannel(user.nick + ": Check your PMs!");
+				user.sendMessage("               *** Welcome to Kristy_Bot ***");
+				user.sendMessage("              *** Current list of commands ***");
+				user.sendMessage("  *** Legend: [req variable] <req literal> (opt variable) {opt literal} ***");
+				for (final Command c : cmds)
+					if (user.isUserAtLeast(c.reqlvl))
+						user.sendMessage(" !" + c.name + ' ' + c.usage + " - " + c.help);
+			}
+		});
+		
+		cmds.add(new Command("debug", Perm.OP, "*CLASSIFIED*", "No information found")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				if (args.length > 1 && args[0].equals("field"))
+				{
+					try
+					{
+						final String[] obj = args[1].split("\\.");
+						Object o = this;
+						for (int i = 0; i < obj.length; ++i)
+						{
+							o = o.getClass().getDeclaredField(obj[i]).get(o);
+						}
+						user.sendMessage("DEBUG Value of field '" + args[1] + "': " + String.valueOf(o));
+					}
+					catch (final Exception ex)
+					{
+						user.sendMessage("DEBUG Error occurred: " + ex.getMessage());
+					}
+				}
+				else sendUsageInfo(user);
+			}
+		});
+		
+		cmds.add(new Command("exit", Perm.OWNER, "(reason)", "Makes the bot disconnect and shut down")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				user.sendMessage("Exiting...");
+				exiting = true;
+				sched.close();
+				if (args.length > 0) quitServer(String.join(" ", args));
+				disconnect();
+				dispose();
+			}
+		});
+		
+		cmds.add(new Command("giveaway", Perm.OWNER, "[minutes]", "Schedules a giveaway")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				if (args.length > 0)
+				{
+					try
+					{
+						final int minutes = Integer.parseInt(args[0]);
+						user.sendMessage("Giveaway " + (gTask == null ? "" : "re") + "scheduled to run in " + minutes + " minutes.");
+						if (gTask == null) sched.addTask(gTask = new GiveawayTask(minutes * 120));
+						else gTask.reschedule(minutes * 120);
+					}
+					catch (final NumberFormatException ex) { sendUsageInfo(user); }
+				}
+				else sendUsageInfo(user);
+			}
+		});
+		
+		cmds.add(new Command("howtoregister", Perm.NONE, "", "Shows a quick registration guide")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+		         user.sendFromChannel(user.nick + ": Check your PMs!");
+		         user.sendMessage("1. Type the following line into the IRC: /ns Register [PASSWORD] [EMAIL]");
+		         user.sendMessage("2. Once you type that, the instructions will tell you that they sent a verification email. You will "
+		                                                 + "be given a line to type into the server that looks like the following line. Copy and paste it.");
+		         user.sendMessage(" /msg NickServ confirm [PASSWORD] ");
+		         user.sendMessage("3. Once you type that in, you will be registered. Restart your IRC client (most likely mibbit) and "
+		                                                 + "type the following line into the server. You will need to type this line every time you join the server.");
+		         user.sendMessage("/ns identify [PASSWORD]");
+			}
+		});
+		
+		cmds.add(new Command("iwon", Perm.VOICE, "", "Shows information")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				user.sendFromChannel(user.nick + ": Check your PMs!");
+				user.sendMessage("                       ***CONGRATULATIONS ***");
+				user.sendMessage("SO you won the giveaway? Nice! To claim your prize, please follow these instructions.");
+				user.sendMessage("   1. Screenshot the message that Kristy_Bot announces which has your name in it.");
+				user.sendMessage("   2. Post the screenshot in a new thread with a title like \"I won an IRC giveaway! 10/9/2015\" ");
+				user.sendMessage("   3. I will contact you and meet you in the IRC again, and you must give me your trade link. ");
+				user.sendMessage("   4. Wait for Kristyboi or myself to send you the redline.");
+				user.sendMessage("   5. Enjoy the redline!");
+			}
+		});
+		
+		cmds.add(new Command("prefix", Perm.NONE, "[nick]", "Shows an user's full nick and prefix")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				if (args.length > 0)
+				{
+					final User u = getUserByNick(args[0]);
+					if (u != null) user.sendMessage("Prefix is '" + u.getPrefix() + "' and full name is '" + u.getNick() + "'.");
+					else user.sendMessage("User not found!");
+				}
+				else sendUsageInfo(user);
+			}
+		});
+		
+		cmds.add(new Command("priv", Perm.OWNER, "[nick] [message]", "Sends a private message from the bot")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				if (args.length > 1) sendMessage(args[0], String.join(" ", args).substring(args[0].length() + 1));
+				else sendUsageInfo(user);
+			}
+		});
+		
+		cmds.add(new Command("pub", Perm.OWNER, "[message]", "Sends a public broadcast from the bot")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				sendMessage(Config.mainChannel, String.join(" ", args));
+			}
+		});
+		
+		cmds.add(new Command("tasks", Perm.OP, "", "Displays the current task list of the scheduler")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				user.sendMessage("Current task list:");
+				for (final String line : sched.getTaskStatus().split("\n"))
+					user.sendMessage(line);
+			}
+		});
+		
+		cmds.add(new Command("timertest", Perm.OP, "<start [ticks]|check>", "Performs a Scheduler tick timer test")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				if (args.length > 1 && args[0].equals("start"))
+				{
+					try
+					{
+						final int ticks = Integer.parseInt(args[1]);
+						sched.addTask(tTask = new TimertestTask(ticks));
+						user.sendMessage("Scheduler timer test task has started for " + ticks + " ticks.");
+					}
+					catch (final NumberFormatException ex) { sendUsageInfo(user); }
+				}
+				else if (args.length > 0 && args[0].equals("check"))
+				{
+					user.sendMessage("Test results - elapsed time: " + tTask.getResult() + " millis per tick");
+				}
+				else sendUsageInfo(user);
+			}
+		});
+		
+		cmds.add(new Command("update", Perm.NONE, "", "Displays the time of the last spreadsheet update")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				final Date upd = mTask.getLastUpdate();
+				if (upd == null) user.sendMessage("Sorry, couldn't detect most recent update.");
+				else if (!user.sendFromChannel(user.nick + ": The last update was at " + upd.toString()))
+					user.sendMessage("The last update was at " + upd.toString());
+			}
+		});
 	}
 	
 	/**
 	 * Processes bot commands
-	 * @param channel Null if the command comes from a private message
-	 * @param sender Message sender
-	 * @param message Message contents in lower-case
+	 * @param sender Command sender
+	 * @param message Command sent
 	 */
-	final void onCommand(final String channel, final BotUser sender, final String message)
+	final void onCommand(final BotUser sender, final String message)
 	{
-		final String[] parts = message.substring(1).split(" ");
-		switch (parts[0])
-		{
-			case "accept":
-				if (sender.isUserAtLeast(Perm.VOICE))
-				{
-					if (gTask.isWinner(getUserByNick(sender.nick)))
-					{
-						gTask.acceptReward();
-						sendMessage(Config.mainChannel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + gTask.winner + Colors.RED + "! Follow the instructions on the steam group page or type \"!iwon\" to find out how to collect your prize!");
-					}
-					else sender.sendMessage("You're not the winner of the current giveaway.");
-				}
-				else sender.sendMessage("Access to command denied!");
-				break;
-				
-			case "update":
-				final Date upd = mTask.getLastUpdate();
-				if (upd == null) sender.sendMessage("Sorry, couldn't detect most recent update.");
-				else if (channel != null) sendMessage(channel, sender.nick + ": The last update was at " + upd.toString());
-				else sender.sendMessage("The last update was at " + upd.toString());
-				break;
-				
-			case "rank":
-				if (channel != null) sendMessage(channel, "Kristyboi is currently a Supreme Analyst First Class.");
-				else sender.sendMessage("Kristyboi is currently a Supreme Analyst First Class.");
-				break;
-				
-			case "iwon":
-				if (channel != null) sendMessage(channel, sender.nick + ": Check your PMs!");
-				sender.sendMessage("                       *** CONGRATULATIONS ***");
-				sender.sendMessage("SO you won the giveaway? Nice! To claim your prize, please follow these instructions.");
-				sender.sendMessage("   1. Screenshot the message that Kristy_Bot announces which has your name in it.");
-				sender.sendMessage("   2. Post the screenshot in a new thread with a title like \"I won an IRC giveaway! 10/9/2015\" ");
-				sender.sendMessage("   3. I will contact you and meet you in the IRC again, and you must give me your trade link. ");
-				sender.sendMessage("   4. Wait for Kristyboi or myself to send you the redline.");
-				sender.sendMessage("   5. Enjoy the redline!");
-				break;
-				
-			case "time":
-				final GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("Europe/Dublin"));
-				sender.sendMessage("Bot time is: " + Config.format(new Date()) + ", Kristyboi's time is: " + Config.format(gc.getTime()));
-				break;
-			
-			case "howtoregister":
-				if (channel != null) sendMessage(channel, sender.nick + ": Check your PMs!");
-				sender.sendMessage("1. Type the following line into the IRC: /ns Register [PASSWORD] [EMAIL]");
-				sender.sendMessage("2. Once you type that, the instructions will tell you that they sent a verification email. You will "
-									+ "be given a line to type into the server that looks like the following line. Copy and paste it.");
-				sender.sendMessage(" /msg NickServ confirm [PASSWORD] ");
-				sender.sendMessage("3. Once you type that in, you will be registered. Restart your IRC client (most likely mibbit) and "
-									+ "type the following line into the server. You will need to type this line every time you join the server.");
-				sender.sendMessage("/ns identify [PASSWORD]");
-				break;
-				
-			case "commands":
-				if (channel != null) sendMessage(channel, sender.nick + ": Check your PMs!");
-				sender.sendMessage("               *** Welcome to Kristy_Bot ***");
-				sender.sendMessage(Colors.BLUE + "!update" + Colors.NORMAL + " :- Show the [DATE & TIME] of the most recent spreadsheet update.");
-				sender.sendMessage(Colors.BLUE + "!rank" + Colors.NORMAL + " :- To see Kristyboi's current rank.");
-				sender.sendMessage(Colors.BLUE + "!iwon" + Colors.NORMAL + " :- Read instructions on what to do if you win the giveaway.");
-				sender.sendMessage(Colors.BLUE + "!time" + Colors.NORMAL + " :- Show the time in Ireland.");
-				sender.sendMessage(Colors.BLUE + "!howtoregister" + Colors.NORMAL + " :- Instructions on how to register for a Rizon account.");
-				sender.sendMessage(Colors.BLUE + "qq [USERNAME]" + Colors.NORMAL + " :- To send the user a place to cry to.");
-				sender.sendMessage("If you have any ideas for future commands of the bot, " + "feel free to send a PM to ThePageMan. Just type \"/msg ThePageMan\" to send a PM.");
-				break;
-				
-			case "prefix":
-				if (parts.length > 1)
-				{
-					final User u = getUserByNick(parts[1]);
-					if (u != null) sender.sendMessage("Prefix is '" + u.getPrefix() + "' and full name is '" + u.getNick() + "'.");
-					else sender.sendMessage("User not found!");
-				}
-				else sender.sendMessage("Command usage format: !prefix [nick]");
-				break;
-				
-			case "tasks":
-				if (sender.isUserAtLeast(Perm.OP))
-				{
-					sender.sendMessage("Current task list:");
-					for (final String line : sched.getTaskStatus().split("\n"))
-						sender.sendMessage(line);
-				}
-				else sender.sendMessage("Access to command denied!");
-				break;
-				
-			case "hash":
-				if (sender.isUserAtLeast(Perm.OP))
-				{
-					final User u = getUserByNick(parts[1]);
-					if (u != null) sender.sendMessage("Hashcode of " + u.getNick() + ": " + u.hashCode());
-					else sender.sendMessage("User not found!");
-				}
-				else sender.sendMessage("Access to command denied!");
-				break;
-				
-			case "priv":
-				if (sender.isUserAtLeast(Perm.ADMIN))
-				{
-					if (parts.length > 2) sendMessage(parts[1], message.substring(6 + parts[1].length()));
-					else sender.sendMessage("Command usage format: !priv [nick] [message]");
-				}
-				else sender.sendMessage("Access to command denied!");
-				break;
-				
-			case "pub":
-				if (sender.isUserAtLeast(Perm.ADMIN))
-				{
-					sendMessage(Config.mainChannel, message.substring(5));
-				}
-				else sender.sendMessage("Access to command denied!");
-				break;
-				
-			case "exit":
-				if (sender.isUserAtLeast(Perm.OWNER))
-				{
-					sender.sendMessage("Exiting...");
-					exiting = true;
-					sched.close();
-					if (parts.length > 1) quitServer(message.substring(6));
-					disconnect();
-					dispose();
-				}
-				else sender.sendMessage("Access to command denied!");
-				break;
-				
-			case "timertest":
-				if (sender.isUserAtLeast(Perm.OP))
-				{
-					if (parts.length > 2 && parts[1].equals("start"))
-					{
-						try
-						{
-							final int ticks = Integer.parseInt(parts[2]);
-							sched.addTask(tTask = new TimertestTask(ticks));
-							sender.sendMessage("Scheduler timer test task has started for " + ticks + " ticks.");
-						}
-						catch (final NumberFormatException ex)
-						{
-							sender.sendMessage("Command usage format: !timertest <start [ticks]|check>");
-						}
-					}
-					else if (parts.length > 1 && parts[1].equals("check"))
-					{
-						sender.sendMessage("Test results - elapsed time: " + tTask.getResult() + " millis per tick");
-					}
-					else sender.sendMessage("Command usage format: !timertest <start [ticks]|check>");
-				}
-				else sender.sendMessage("Access to command denied!");
-				break;
-				
-			case "giveaway":
-				if (sender.isUserAtLeast(Perm.OWNER))
-				{
-					if (parts.length > 1)
-					{
-						try
-						{
-							final int minutes = Integer.parseInt(parts[1]);
-							sender.sendMessage("Giveaway " + (gTask == null ? "" : "re") + "scheduled to run in " + minutes + " minutes.");
-							if (gTask == null) sched.addTask(gTask = new GiveawayTask(minutes * 120));
-							else gTask.reschedule(minutes * 120);
-						}
-						catch (final NumberFormatException ex)
-						{
-							sender.sendMessage("Command usage format: !giveaway [minutes]");
-						}
-					}
-					else sender.sendMessage("Command usage format: !giveaway [minutes]");
-				}
-				else sender.sendMessage("Access to command denied!");
-				break;
-				
-			case "debug":
-				if (sender.isUserAtLeast(Perm.OP))
-				{
-					if (parts.length > 2 && parts[1].equals("field"))
-					{
-						try
-						{
-							final String[] obj = parts[2].split("\\.");
-							Object o = this;
-							for (int i = 0; i < obj.length; ++i)
-							{
-								o = o.getClass().getDeclaredField(obj[i]).get(o);
-							}
-							sender.sendMessage("DEBUG Value of field '" + parts[2] + "': " + String.valueOf(o));
-						}
-						catch (final Exception ex)
-						{
-							sender.sendMessage("DEBUG Error occurred: " + ex.getMessage());
-						}
-					}
-					else sender.sendMessage("Command usage format: <CLASSIFIED>");
-				}
-				else sender.sendMessage("Access to command denied!");
-				break;
-				
-			default:
-				sender.sendMessage("Unknown command!");
-				break;
-		}
+		final String[] parts = message.toLowerCase().substring(1).split(" ", 2);
+		for (final Command c : cmds)
+			if (c.name.equals(parts[0]))
+			{
+				if (sender.isUserAtLeast(c.reqlvl))
+					c.onExecute(sender, parts[1].split(" "));
+				else sender.sendMessage("Access to command denied! Required permission level: " + Perm.getName(c.reqlvl));
+				return;
+			}
+		sender.sendMessage("Unknown command!");
 	}
 	
 	/**
@@ -349,17 +344,17 @@ public final class MyBot extends PircBot
 	}
 	
 	@Override
-	protected final void onMessage(final String channel, final String sender, final String login, final String hostname, final String message)
+	protected final void onMessage(final String channel, final String sender, final String login, final String hostname, String message)
 	{
-		final String msgLower = message.toLowerCase();
-		if (msgLower.startsWith("!")) onCommand(channel, new BotUser(getRealNick(sender)), msgLower);
-		else if (msgLower.contains("rip") && msgLower.contains("skin") || msgLower.equals("qq"))
+		message = message.toLowerCase();
+		if (message.startsWith("!")) onCommand(new BotUser(getRealNick(sender), channel), message);
+		else if (message.contains("rip") && message.contains("skin") || message.equals("qq"))
 		{
 			sendMessage(channel, sender + ": http://how.icryeverytime.com");
 		}
-		else if (msgLower.startsWith("qq"))
+		else if (message.startsWith("qq"))
 		{
-			final String[] parts = msgLower.split(" ");
+			final String[] parts = message.split(" ");
 			final User[] users = getUsers(Config.mainChannel);
 			for (int i = 0; i < users.length - 1; i++)
 			{
@@ -373,7 +368,7 @@ public final class MyBot extends PircBot
 				}
 			}
 		}
-		else if (msgLower.contains("bot") && (msgLower.contains("shit") || msgLower.contains("crap") || msgLower.contains("useless")))
+		else if (message.contains("bot") && (message.contains("shit") || message.contains("crap") || message.contains("useless")))
 		{
 			sendMessage(channel, ":(");
 		}
@@ -382,7 +377,7 @@ public final class MyBot extends PircBot
 	@Override
 	protected final void onPrivateMessage(final String sender, final String login, final String hostname, final String message)
 	{
-		if (message.startsWith("!")) onCommand(null, new BotUser(sender), message.toLowerCase());
+		if (message.startsWith("!")) onCommand(new BotUser(sender, null), message);
 		// Relay all other Bot PMs to ThePageMan because why not lel
 		else sendMessage("ThePageMan", sender + ": " + message);
 	}
@@ -390,36 +385,8 @@ public final class MyBot extends PircBot
 	@Override
 	protected final void onJoin(String channel, String sender, String login, String hostname)
 	{
-		// ban(channel,hostname);
-		//
-		// if( !sender.equals("~ThePageMan") && !sender.equals("ThePageMan")
-		// && !sender.equals("&Kristy_Bot") && !sender.equals("Kristy_Bot")
-		// && !sender.equals("&Warden") && !sender.equals("Warden")
-		// && !sender.equals("&Kristyboi") && !sender.equals("Kristyboi")){
-		// ArrayList<String> bannedArrayList = new ArrayList<String>();
-		// bannedArrayList = loadBannedList();
-		//
-		// bannedArrayList.add(hostname);
-		// storeBannedList(bannedArrayList);
-		//
-		// ban(channel,hostname);
-		// }
 		voice(channel, sender);
 	}
-
-	// public void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason)
-	// {
-	// ArrayList<String> bannedArrayList = new ArrayList<String>();
-	// Config.log("Someone quit");
-	// bannedArrayList = loadBannedList();
-	// if(bannedArrayList.contains(sourceHostname)){
-	// bannedArrayList.remove(sourceHostname);
-	// }
-	//
-	// storeBannedList(bannedArrayList);
-	//
-	// unBan(Config.mainChannel,sourceHostname);
-	// }
 	
 	@Override
 	protected final void onOp(final String channel, final String sourceNick, final String sourceLogin, final String sourceHostname, final String recipient)
@@ -477,5 +444,66 @@ public final class MyBot extends PircBot
 			}
 		}
 		return users.get(rand.nextInt(users.size()));
+	}
+
+	private static abstract class Command
+	{
+		final String name, usage, help;
+		final int reqlvl;
+		
+		Command(final String cmdname, final int reqperm, final String cmdusage, final String cmdhelp)
+		{
+			name = cmdname; reqlvl = reqperm; usage = cmdusage; help = cmdhelp;
+		}
+		
+		abstract void onExecute(final BotUser user, final String[] args);
+		
+		/**
+		 * Sends command usage information to the user
+		 */
+		final void sendUsageInfo(final BotUser user)
+		{
+			user.sendMessage("Usage: !" + name + ' ' + usage + " - " + help);
+		}
+	}
+	
+	public static class BotUser
+	{
+		final String nick, channel;
+		
+		public BotUser(final String nickname, final String ch)
+		{
+			nick = nickname; channel = ch;
+		}
+		
+		/**
+		 * Sends a private message to the user
+		 * @param msg The message
+		 */
+		public void sendMessage(final String msg)
+		{
+			instance.sendMessage(nick, msg);
+		}
+		
+		/**
+		 * Sends a message to the user from the channel
+		 * @param msg The message
+		 * @return True if the channel is set and the message was sent, false otherwise
+		 */
+		public final boolean sendFromChannel(final String msg)
+		{
+			if (channel == null) return false;
+			instance.sendMessage(channel, msg);
+			return true;
+		}
+		
+		/**
+		 * Checks if the user has a required permission level
+		 * @param permlvl The required permission level: {@link MyBot.Perm}
+		 */
+		public boolean isUserAtLeast(final int permlvl)
+		{
+			return instance.getPermLevel(nick) >= permlvl;
+		}
 	}
 }

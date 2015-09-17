@@ -3,7 +3,7 @@ import java.io.InputStreamReader;
 
 public final class MyBotMain
 {
-	private static final MyBot.BotUser console = new MyBot.BotUser("~")
+	private static final MyBot.BotUser console = new MyBot.BotUser(null, "~")
 	{
 		/**
 		 * Prints a message to the standard output
@@ -20,7 +20,7 @@ public final class MyBotMain
 		@Override
 		public final boolean isUserAtLeast(final int permlvl)
 		{
-			return true;
+			return MyBot.Perm.CONSOLE >= permlvl;
 		}
 	};
 	
@@ -49,7 +49,7 @@ public final class MyBotMain
 			{
 				while (!bot.exiting)
 				{
-					if (br.ready()) bot.onCommand(null, console, '!' + br.readLine());
+					if (br.ready()) bot.onCommand(console, '!' + br.readLine());
 					else Thread.sleep(500);
 				}
 			}
