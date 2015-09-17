@@ -289,7 +289,7 @@ public final class MyBot extends PircBot
 			if (c.name.equals(parts[0]))
 			{
 				if (sender.isUserAtLeast(c.reqlvl))
-					c.onExecute(sender, parts[1].split(" "));
+					c.onExecute(sender, parts.length > 1 ? parts[1].split(" ") : new String[0]);
 				else sender.sendMessage("Access to command denied! Required permission level: " + Perm.getName(c.reqlvl));
 				return;
 			}
@@ -304,7 +304,7 @@ public final class MyBot extends PircBot
 	{
 		nick = getRealNick(nick);
 		final User[] usrs = getUsers(Config.mainChannel);
-		for (final User u : usrs) if (nick.equals(u.getNick())) return u;
+		for (final User u : usrs) if (nick.equals(getRealNick(u.getNick()))) return u;
 		return null;
 	}
 	
