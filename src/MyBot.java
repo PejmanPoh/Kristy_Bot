@@ -119,9 +119,14 @@ public final class MyBot extends PircBot
 				else sender.sendMessage("The last update was at " + upd.toString());
 				break;
 				
+			case "rank":
+				if (channel != null) sendMessage(channel, "Kristyboi is currently a Supreme Analyst First Class.");
+				else sender.sendMessage("Kristyboi is currently a Supreme Analyst First Class.");
+				break;
+				
 			case "iwon":
 				if (channel != null) sendMessage(channel, sender.nick + ": Check your PMs!");
-				sender.sendMessage("                       ***CONGRATULATIONS ***");
+				sender.sendMessage("                       *** CONGRATULATIONS ***");
 				sender.sendMessage("SO you won the giveaway? Nice! To claim your prize, please follow these instructions.");
 				sender.sendMessage("   1. Screenshot the message that Kristy_Bot announces which has your name in it.");
 				sender.sendMessage("   2. Post the screenshot in a new thread with a title like \"I won an IRC giveaway! 10/9/2015\" ");
@@ -130,22 +135,42 @@ public final class MyBot extends PircBot
 				sender.sendMessage("   5. Enjoy the redline!");
 				break;
 				
-			case "rank":
-				if (channel == null) sender.sendMessage("Kristyboi is currently a Supreme Analyst First Class.");
-				else sendMessage(channel, "Kristyboi is currently a Supreme Analyst First Class.");
+			case "time":
+				final GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("Europe/Dublin"));
+				sender.sendMessage("Bot time is: " + Config.format(new Date()) + ", Kristyboi's time is: " + Config.format(gc.getTime()));
+				break;
+			
+			case "howtoregister":
+				if (channel != null) sendMessage(channel, sender.nick + ": Check your PMs!");
+				sender.sendMessage("1. Type the following line into the IRC: /ns Register [PASSWORD] [EMAIL]");
+				sender.sendMessage("2. Once you type that, the instructions will tell you that they sent a verification email. You will "
+									+ "be given a line to type into the server that looks like the following line. Copy and paste it.");
+				sender.sendMessage(" /msg NickServ confirm [PASSWORD] ");
+				sender.sendMessage("3. Once you type that in, you will be registered. Restart your IRC client (most likely mibbit) and "
+									+ "type the following line into the server. You will need to type this line every time you join the server.");
+				sender.sendMessage("/ns identify [PASSWORD]");
 				break;
 				
 			case "commands":
 				if (channel != null) sendMessage(channel, sender.nick + ": Check your PMs!");
 				sender.sendMessage("               *** Welcome to Kristy_Bot ***");
-				sender.sendMessage("              *** Current list of commands ***");
 				sender.sendMessage(Colors.BLUE + "!update" + Colors.NORMAL + " :- Show the [DATE & TIME] of the most recent spreadsheet update.");
 				sender.sendMessage(Colors.BLUE + "!rank" + Colors.NORMAL + " :- To see Kristyboi's current rank.");
-				sender.sendMessage(Colors.BLUE + "qq [NAME]" + Colors.NORMAL + " :- To send the user a place to cry to.");
-				sender.sendMessage(" ");
-				sender.sendMessage("Also another helpful command not related to the bot is " + "\"/msg NickServ Register [PASSWORD] [EMAIL]\". " + "This command allows you to register your nickname so that you can claim it. " + "Type \"/msg NickServ help\" for the full list of commands. " + "You can kick people off your username automatically after 60 seconds " + "among other useful features.");
-				sender.sendMessage(" ");
+				sender.sendMessage(Colors.BLUE + "!iwon" + Colors.NORMAL + " :- Read instructions on what to do if you win the giveaway.");
+				sender.sendMessage(Colors.BLUE + "!time" + Colors.NORMAL + " :- Show the time in Ireland.");
+				sender.sendMessage(Colors.BLUE + "!howtoregister" + Colors.NORMAL + " :- Instructions on how to register for a Rizon account.");
+				sender.sendMessage(Colors.BLUE + "qq [USERNAME]" + Colors.NORMAL + " :- To send the user a place to cry to.");
 				sender.sendMessage("If you have any ideas for future commands of the bot, " + "feel free to send a PM to ThePageMan. Just type \"/msg ThePageMan\" to send a PM.");
+				break;
+				
+			case "prefix":
+				if (parts.length > 1)
+				{
+					final User u = getUserByNick(parts[1]);
+					if (u != null) sender.sendMessage("Prefix is '" + u.getPrefix() + "' and full name is '" + u.getNick() + "'.");
+					else sender.sendMessage("User not found!");
+				}
+				else sender.sendMessage("Command usage format: !prefix [nick]");
 				break;
 				
 			case "tasks":
@@ -166,21 +191,6 @@ public final class MyBot extends PircBot
 					else sender.sendMessage("User not found!");
 				}
 				else sender.sendMessage("Access to command denied!");
-				break;
-				
-			case "prefix":
-				if (parts.length > 1)
-				{
-					final User u = getUserByNick(parts[1]);
-					if (u != null) sender.sendMessage("Prefix is '" + u.getPrefix() + "' and full name is '" + u.getNick() + "'.");
-					else sender.sendMessage("User not found!");
-				}
-				else sender.sendMessage("Command usage format: !prefix [nick]");
-				break;
-				
-			case "time":
-				final GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("Europe/Dublin"));
-				sender.sendMessage("Bot time is: " + Config.format(new Date()) + ", Kristyboi's time is: " + Config.format(gc.getTime()));
 				break;
 				
 			case "priv":
