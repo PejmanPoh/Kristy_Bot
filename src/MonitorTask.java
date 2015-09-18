@@ -12,6 +12,7 @@ final class MonitorTask extends Scheduler.Task
 	private Date lastUpdate;
 	private final Object monitor = new Object();
 	private Folder inbox = null;
+	private int dontsend = 0;
 	
 	MonitorTask()
 	{
@@ -39,12 +40,12 @@ final class MonitorTask extends Scheduler.Task
 	@Override
 	public final void main()
 	{
+		if (dontsend > 0) --dontsend;
 		try
 		{
 			inbox.open(Folder.READ_WRITE);
 			final Message[] msgs = inbox.getMessages();
 			final int unreadMessageCount = inbox.getUnreadMessageCount();
-			boolean send = true;
 			if (unreadMessageCount > 0)
 			{
 				for (int i = msgs.length - 1; i >= msgs.length - unreadMessageCount; i--)
@@ -53,10 +54,10 @@ final class MonitorTask extends Scheduler.Task
 					if (msgs[i].getSubject().contains("\"September Spreadsheet\" was edited recently") && !msgs[i].isSet(Flag.SEEN))
 					{
 						Config.log("Spreadsheet update detected");
-						if (send)
+						if (dontsend < 1)
 						{
-							// Prevent multiple announcments
-							send = false;
+							// Prevent announcments for 10 minutes
+							dontsend = 20;
 							MyBot.instance.sendMessage(Config.mainChannel, Colors.RED + "***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
 						}
 						msgs[i].setFlag(Flag.SEEN, true);
@@ -81,6 +82,6 @@ final class MonitorTask extends Scheduler.Task
 			try { inbox.close(true); }
 			catch (final MessagingException | IllegalStateException ex) { }
 		}
-		reschedule(90);
+		reschedule(60);
 	}
 }
