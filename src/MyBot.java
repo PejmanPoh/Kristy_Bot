@@ -349,7 +349,7 @@ public final class MyBot extends PircBot
 	protected final void onMessage(final String channel, final String sender, final String login, final String hostname, String message)
 	{
 		message = message.toLowerCase();
-		if (message.startsWith("!")) onCommand(new BotUser(getRealNick(sender), channel), message);
+		if (message.startsWith("!") && message.length() > 1) onCommand(new BotUser(getRealNick(sender), channel), message);
 		else if (message.contains("rip") && message.contains("skin") || message.equals("qq"))
 		{
 			sendMessage(channel, sender + ": http://how.icryeverytime.com");
