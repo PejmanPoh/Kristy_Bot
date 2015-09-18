@@ -362,31 +362,34 @@ public final class MyBot extends PircBot
 	@Override
 	protected final void onMessage(final String channel, final String sender, final String login, final String hostname, String message)
 	{
-		message = message.toLowerCase();
 		if (message.startsWith("!") && message.length() > 1) onCommand(new BotUser(getRealNick(sender), channel), message);
-		else if (message.contains("rip") && message.contains("skin") || message.equals("qq"))
+		else
 		{
-			sendMessage(channel, sender + ": http://how.icryeverytime.com");
-		}
-		else if (message.startsWith("qq"))
-		{
-			final String[] parts = message.split(" ");
-			final User[] users = getUsers(Config.mainChannel);
-			for (int i = 0; i < users.length - 1; i++)
+			message = message.toLowerCase();
+			if (message.contains("rip") && message.contains("skin") || message.equals("qq"))
 			{
-				if ((users[i].getNick().toLowerCase().equals(parts[1])))
+				sendMessage(channel, sender + ": http://how.icryeverytime.com");
+			}
+			else if (message.startsWith("qq"))
+			{
+				final String[] parts = message.split(" ");
+				final User[] users = getUsers(Config.mainChannel);
+				for (int i = 0; i < users.length - 1; i++)
 				{
-					sendMessage(channel, users[i].getNick() + ": http://how.icryeverytime.com");
-				}
-				else if (users[i].getNick().substring(1).toLowerCase().equals(parts[1]))
-				{
-					sendMessage(channel, users[i].getNick() + ": http://how.icryeverytime.com");
+					if ((users[i].getNick().toLowerCase().equals(parts[1])))
+					{
+						sendMessage(channel, users[i].getNick() + ": http://how.icryeverytime.com");
+					}
+					else if (users[i].getNick().substring(1).toLowerCase().equals(parts[1]))
+					{
+						sendMessage(channel, users[i].getNick() + ": http://how.icryeverytime.com");
+					}
 				}
 			}
-		}
-		else if (message.contains("bot") && (message.contains("shit") || message.contains("crap") || message.contains("useless")))
-		{
-			sendMessage(channel, ":(");
+			else if (message.contains("bot") && (message.contains("shit") || message.contains("crap") || message.contains("useless")))
+			{
+				sendMessage(channel, ":(");
+			}
 		}
 	}
 
