@@ -3,6 +3,7 @@ import org.jibble.pircbot.PircBot;
 import org.jibble.pircbot.User;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -118,7 +119,9 @@ public final class MyBot extends PircBot
 						Object o = instance;
 						for (int i = 0; i < obj.length; ++i)
 						{
-							o = o.getClass().getDeclaredField(obj[i]).get(o);
+							final Field f = o.getClass().getDeclaredField(obj[i]);
+							f.setAccessible(true);
+							o = f.get(o);
 						}
 						user.sendMessage("DEBUG Value of field '" + args[1] + "': " + String.valueOf(o));
 					}
@@ -239,6 +242,17 @@ public final class MyBot extends PircBot
 				user.sendMessage("Current task list:");
 				for (final String line : sched.getTaskStatus().split("\n"))
 					user.sendMessage(line);
+			}
+		});
+		
+		cmds.add(new Command("time", Perm.NONE, "", "Shows the time in bot's timezone and Kristyboi's timezone")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+                final GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("Europe/Dublin"));
+				final String msg = "Bot time is: " + Config.format(new Date()) + ", Kristyboi's time is: " + Config.format(gc.getTime());
+				if (!user.sendFromChannel(msg)) user.sendMessage(msg);
 			}
 		});
 		
