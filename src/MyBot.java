@@ -33,6 +33,8 @@ public final class MyBot extends PircBot
 	
 	private static final LinkedList<Command> cmds = new LinkedList<Command>();
 	
+	private static final LinkedList<String> reg = new LinkedList<String>();
+	
 	/** A static main class instance */
 	public static MyBot instance;
 	
@@ -168,19 +170,50 @@ public final class MyBot extends PircBot
 			}
 		});
 		
+		cmds.add(new Command("hash", Perm.OP, "[nick]", "Displays user's hashcode")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				if (args.length > 0)
+				{
+					final User u = getUserByNick(args[0]);
+					if (u == null) user.sendMessage("User not found!");
+					else user.sendMessage("Hashcode of user " + args[0] + ": " + u.hashCode());
+				}
+				else sendUsageInfo(user);
+			}
+		});
+		
 		cmds.add(new Command("howtoregister", Perm.NONE, "", "Shows a quick registration guide")
 		{
 			@Override
 			final void onExecute(final BotUser user, final String[] args)
 			{
 		         user.sendFromChannel(user.nick + ": Check your PMs!");
-		         user.sendMessage("1. Type the following line into the IRC: /ns Register [PASSWORD] [EMAIL]");
+		         user.sendMessage("1. Type the following line into the IRC: /ns register [PASSWORD] [EMAIL]");
 		         user.sendMessage("2. Once you type that, the instructions will tell you that they sent a verification email. You will "
 		                                                 + "be given a line to type into the server that looks like the following line. Copy and paste it.");
-		         user.sendMessage(" /msg NickServ confirm [PASSWORD] ");
+		         user.sendMessage(" /ns confirm [PASSWORD] ");
 		         user.sendMessage("3. Once you type that in, you will be registered. Restart your IRC client (most likely mibbit) and "
 		                                                 + "type the following line into the server. You will need to type this line every time you join the server.");
 		         user.sendMessage("/ns identify [PASSWORD]");
+			}
+		});
+		
+		cmds.add(new Command("identified", Perm.HALFOP, "[nick]", "Checks if an user is registered and has been identified")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+		         if (args.length > 0)
+		         {
+		        	 final String msg;
+		        	 if (reg.contains(args[0])) msg = "User " + args[0] + " is registered and has been identified.";
+		        	 else msg = "User not found or hasn't been identified!";
+		        	 if (!user.sendFromChannel(msg)) user.sendMessage(msg);
+		         }
+		         else sendUsageInfo(user);
 			}
 		});
 		
@@ -231,6 +264,16 @@ public final class MyBot extends PircBot
 			final void onExecute(final BotUser user, final String[] args)
 			{
 				sendMessage(Config.mainChannel, String.join(" ", args));
+			}
+		});
+		
+		cmds.add(new Command("rank", Perm.NONE, "", "Shows an arbitrary Kristyboi's rank")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				final String msg = "Kristyboi is currently a Supreme Analyst First Class.";
+				if (!user.sendFromChannel(msg)) user.sendMessage(msg);
 			}
 		});
 		
@@ -290,6 +333,16 @@ public final class MyBot extends PircBot
 					user.sendMessage("The last update was at " + upd.toString());
 			}
 		});
+	}
+	
+	@Override
+	protected final void onConnect()
+	{
+		Config.log("Sending IDENTIFY command...");
+		identify(Config.get("identifypw"));
+		
+		Config.log("Joining " + Config.mainChannel + "...");
+		joinChannel(Config.mainChannel);
 	}
 	
 	/**
@@ -360,7 +413,33 @@ public final class MyBot extends PircBot
 	}
 	
 	@Override
-	protected final void onMessage(final String channel, final String sender, final String login, final String hostname, String message)
+	protected final void onUserMode(final String nick, final String srcNick, final String srcLogin, final String srcHost, final String mode)
+	{
+		if (mode.equals("+r"))
+		{
+			reg.add(nick);
+			voice(Config.mainChannel, nick);
+		}
+		else if (mode.equals("-r")) reg.remove(nick);
+	}
+	
+	@Override
+	protected final void onUserList(final String channel, final User[] users)
+	{
+		for (final User u : users)
+		{
+			sendRawLineViaQueue("/ns status " + getRealNick(u.getNick()));
+		}
+	}
+	
+	@Override
+	protected final void onServerResponse(final int code, final String response)
+	{
+		if (response.contains("STATUS ")) Config.log("DEBUG Response code " + code + ": " + response);
+	}
+	
+	@Override
+	protected final void onMessage(final String channel, final String sender, final String login, final String host, String message)
 	{
 		if (message.startsWith("!") && message.length() > 1) onCommand(new BotUser(getRealNick(sender), channel), message);
 		else
@@ -400,11 +479,11 @@ public final class MyBot extends PircBot
 		// Relay all other Bot PMs to ThePageMan because why not lel
 		else sendMessage("ThePageMan", sender + ": " + message);
 	}
-
+	
 	@Override
-	protected final void onJoin(String channel, String sender, String login, String hostname)
+	protected final void onQuit(String nick, String srcLogin, String srcHost, String reason)
 	{
-		voice(channel, sender);
+		reg.remove(nick);
 	}
 	
 	@Override

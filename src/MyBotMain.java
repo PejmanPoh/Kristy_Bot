@@ -36,14 +36,6 @@ public final class MyBotMain
 
 			Config.log("Connecting to the server...");
 			bot.connect("irc.rizon.net");
-
-			Config.log("Sending IDENTIFY command...");
-			bot.identify(Config.get("identifypw"));
-
-			Thread.sleep(1500);
-			
-			Config.log("Joining " + Config.mainChannel + "...");
-			bot.joinChannel(Config.mainChannel);
 			
 			try (final BufferedReader br = new BufferedReader(new InputStreamReader(System.in)))
 			{
