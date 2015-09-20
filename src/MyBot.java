@@ -222,7 +222,8 @@ public final class MyBot extends PircBot
 			@Override
 			final void onExecute(final BotUser user, final String[] args)
 			{
-				user.sendFromChannel(user.nick + ": Check your PMs!");
+				sendNotice(user.nick, "Check your PMs!");
+//				user.sendFromChannel(user.nick + ": Check your PMs!");
 				user.sendMessage("                       ***CONGRATULATIONS ***");
 				user.sendMessage("SO you won the giveaway? Nice! To claim your prize, please follow these instructions.");
 				user.sendMessage("   1. Screenshot the message that Kristy_Bot announces which has your name in it.");
