@@ -343,6 +343,8 @@ public final class MyBot extends PircBot
 		
 		Config.log("Joining " + Config.mainChannel + "...");
 		joinChannel(Config.mainChannel);
+		
+		setMessageDelay(500);
 	}
 	
 	/**
@@ -428,9 +430,8 @@ public final class MyBot extends PircBot
 	{
 		for (final User u : users)
 		{
-			sendRawLineViaQueue("/msg ThePageMan " + getRealNick(u.getNick())); //Doesn't seem to recognise the commands /msg or status
-			sendMessage(Config.mainChannel, "/msg Nickserv status " + getRealNick(u.getNick())); //Possible workaround?
-		}
+			this.sendRawLineViaQueue("STATUS " + getRealNick(u.getNick())); //Doesn't seem to recognise the commands /msg or status
+			}
 	}
 	
 	@Override
