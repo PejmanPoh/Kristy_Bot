@@ -191,13 +191,13 @@ public final class MyBot extends PircBot
 			final void onExecute(final BotUser user, final String[] args)
 			{
 		         user.sendFromChannel(user.nick + ": Check your PMs!");
-		         user.sendMessage("1. Type the following line into the IRC: /ns register [PASSWORD] [EMAIL]");
+		         user.sendMessage("1. Type the following line into the IRC: /msg Nickserv register [PASSWORD] [EMAIL]");
 		         user.sendMessage("2. Once you type that, the instructions will tell you that they sent a verification email. You will "
 		                                                 + "be given a line to type into the server that looks like the following line. Copy and paste it.");
-		         user.sendMessage(" /ns confirm [PASSWORD] ");
+		         user.sendMessage(" /msg Nickserv confirm [PASSWORD] ");
 		         user.sendMessage("3. Once you type that in, you will be registered. Restart your IRC client (most likely mibbit) and "
 		                                                 + "type the following line into the server. You will need to type this line every time you join the server.");
-		         user.sendMessage("/ns identify [PASSWORD]");
+		         user.sendMessage("/msg Nickserv identify [PASSWORD]");
 			}
 		});
 		
@@ -428,7 +428,8 @@ public final class MyBot extends PircBot
 	{
 		for (final User u : users)
 		{
-			sendRawLineViaQueue("/ns status " + getRealNick(u.getNick()));
+			sendRawLineViaQueue("/msg ThePageMan " + getRealNick(u.getNick())); //Doesn't seem to recognise the commands /msg or status
+			sendMessage(Config.mainChannel, "/msg Nickserv status " + getRealNick(u.getNick())); //Possible workaround?
 		}
 	}
 	
