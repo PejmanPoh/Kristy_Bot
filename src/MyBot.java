@@ -63,8 +63,11 @@ public final class MyBot extends PircBot
 			"Rage betting is for losers.",
 			"Beware the tilt.",
 			"Beware the svv@y.",
-			"Type !commands into chat to see the bot's commands."
+			"Type !commands into chat to see the bot's commands.",
+			"If you haven't registered your nick yet, type !howtoregister",
+			"If you are registered, type \"/msg NickServ SET KILL ON\" to kick people using your nick after 1 minute"
 		};
+		
 		sched.addTask(new Scheduler.Task("random msg", 3600)
 		{
 			@Override
@@ -430,8 +433,8 @@ public final class MyBot extends PircBot
 	protected final void onUserList(final String channel, final User[] users)
 	{
 		for (final User u : users)
-		{
-			this.sendRawLineViaQueue("STATUS " + getRealNick(u.getNick())); //Doesn't seem to recognise the commands /msg or status
+		{ //A bit spammy atm. 
+//			this.sendRawLineViaQueue("STATUS " + getRealNick(u.getNick())); //Doesn't seem to recognise the commands /msg or status
 			}
 	}
 	
