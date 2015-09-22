@@ -15,6 +15,15 @@ public final class MyBotMain
 		}
 		
 		/**
+		 * Prints a notice to a user or channel
+		 */
+		@Override
+		public final void sendNotice(final String msg)
+		{
+			Config.log("IRC Notice: " + msg);
+		}
+		
+		/**
 		 * Console user has all permissions possible
 		 */
 		@Override

@@ -65,7 +65,8 @@ public final class MyBot extends PircBot
 			"Beware the svv@y.",
 			"Type !commands into chat to see the bot's commands.",
 			"If you haven't registered your nick yet, type !howtoregister",
-			"If you are registered, type \"/msg NickServ SET KILL ON\" to kick people using your nick after 1 minute"
+			"If you are registered, type \"/msg NickServ SET KILL ON\" to kick people using your nick after 1 minute",
+			"\"always all in underdog guys\" - tameh, 2015"
 		};
 		
 		sched.addTask(new Scheduler.Task("random msg", 3600)
@@ -90,9 +91,9 @@ public final class MyBot extends PircBot
 				if (gTask.isWinner(getUserByNick(user.nick)))
 				{
 					gTask.acceptReward();
-					sendMessage(Config.mainChannel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + gTask.winner + Colors.RED + "! Follow the instructions on the steam group page or type \"!iwon\" to find out how to collect your prize!");
+					user.sendMessageFromChannel(Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.PURPLE + gTask.winner + Colors.RED + "! Follow the instructions on the steam group page or type \"!iwon\" to find out how to collect your prize!");
 				}
-				else user.sendMessage("You're not the winner of the current giveaway.");
+				else user.sendNotice("You're not the winner of the current giveaway.");
 			}
 		});
 		
@@ -101,13 +102,12 @@ public final class MyBot extends PircBot
 			@Override
 			final void onExecute(final BotUser user, final String[] args)
 			{
-				user.sendFromChannel(user.nick + ": Check your PMs!");
-				user.sendMessage("               *** Welcome to Kristy_Bot ***");
-				user.sendMessage("              *** Current list of commands ***");
-				user.sendMessage("  *** Legend: [req variable] <req literal> (opt variable) {opt literal} ***");
+				user.sendNotice("               *** Welcome to Kristy_Bot ***");
+				user.sendNotice("              *** Current list of commands ***");
+				user.sendNotice("  *** Legend: [req variable] <req literal> (opt variable) {opt literal} ***");
 				for (final Command c : cmds)
 					if (user.isUserAtLeast(c.reqlvl))
-						user.sendMessage(" !" + c.name + ' ' + c.usage + " - " + c.help);
+						user.sendNotice(" !" + c.name + ' ' + c.usage + " - " + c.help);
 			}
 		});
 		
@@ -193,14 +193,13 @@ public final class MyBot extends PircBot
 			@Override
 			final void onExecute(final BotUser user, final String[] args)
 			{
-		         user.sendFromChannel(user.nick + ": Check your PMs!");
-		         user.sendMessage("1. Type the following line into the IRC: /msg Nickserv register [PASSWORD] [EMAIL]");
-		         user.sendMessage("2. Once you type that, the instructions will tell you that they sent a verification email. You will "
+		         user.sendNotice("1. Type the following line into the IRC: /msg Nickserv register [PASSWORD] [EMAIL]");
+		         user.sendNotice("2. Once you type that, the instructions will tell you that they sent a verification email. You will "
 		                                                 + "be given a line to type into the server that looks like the following line. Copy and paste it.");
-		         user.sendMessage(" /msg Nickserv confirm [PASSWORD] ");
-		         user.sendMessage("3. Once you type that in, you will be registered. Restart your IRC client (most likely mibbit) and "
+		         user.sendNotice(" /msg Nickserv confirm [PASSWORD] ");
+		         user.sendNotice("3. Once you type that in, you will be registered. Restart your IRC client (most likely mibbit) and "
 		                                                 + "type the following line into the server. You will need to type this line every time you join the server.");
-		         user.sendMessage("/msg Nickserv identify [PASSWORD]");
+		         user.sendNotice("/msg Nickserv identify [PASSWORD]");
 			}
 		});
 		
@@ -214,7 +213,7 @@ public final class MyBot extends PircBot
 		        	 final String msg;
 		        	 if (reg.contains(args[0])) msg = "User " + args[0] + " is registered and has been identified.";
 		        	 else msg = "User not found or hasn't been identified!";
-		        	 if (!user.sendFromChannel(msg)) user.sendMessage(msg);
+		        	 if (!user.sendMessageFromChannel(msg)) user.sendMessage(msg);
 		         }
 		         else sendUsageInfo(user);
 			}
@@ -225,15 +224,13 @@ public final class MyBot extends PircBot
 			@Override
 			final void onExecute(final BotUser user, final String[] args)
 			{
-				sendNotice(user.nick, "Check your PMs!");
-//				user.sendFromChannel(user.nick + ": Check your PMs!");
-				user.sendMessage("                       ***CONGRATULATIONS ***");
-				user.sendMessage("SO you won the giveaway? Nice! To claim your prize, please follow these instructions.");
-				user.sendMessage("   1. Screenshot the message that Kristy_Bot announces which has your name in it.");
-				user.sendMessage("   2. Post the screenshot in a new thread with a title like \"I won an IRC giveaway! 10/9/2015\" ");
-				user.sendMessage("   3. I will contact you and meet you in the IRC again, and you must give me your trade link. ");
-				user.sendMessage("   4. Wait for Kristyboi or myself to send you the redline.");
-				user.sendMessage("   5. Enjoy the redline!");
+				sendNotice(user.nick, "                       ***CONGRATULATIONS ***");
+				sendNotice(user.nick, "SO you won the giveaway? Nice! To claim your prize, please follow these instructions.");
+				sendNotice(user.nick, "   1. Screenshot the message that Kristy_Bot announces which has your name in it.");
+				sendNotice(user.nick, "   2. Post the screenshot in a new thread with a title like \"I won an IRC giveaway! 10/9/2015\" ");
+				sendNotice(user.nick, "   3. I will contact you and meet you in the IRC again, and you must give me your trade link. ");
+				sendNotice(user.nick, "   4. Wait for Kristyboi or myself to send you the redline.");
+				sendNotice(user.nick, "   5. Enjoy the redline!");
 			}
 		});
 		
@@ -277,7 +274,7 @@ public final class MyBot extends PircBot
 			final void onExecute(final BotUser user, final String[] args)
 			{
 				final String msg = "Kristyboi is currently a Supreme Analyst First Class.";
-				if (!user.sendFromChannel(msg)) user.sendMessage(msg);
+				if (!user.sendMessageFromChannel(msg)) user.sendMessage(msg);
 			}
 		});
 		
@@ -299,7 +296,7 @@ public final class MyBot extends PircBot
 			{
                 final GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("Europe/Dublin"));
 				final String msg = "Bot time is: " + Config.format(new Date()) + ", Kristyboi's time is: " + Config.format(gc.getTime());
-				if (!user.sendFromChannel(msg)) user.sendMessage(msg);
+				if (!user.sendNoticeFromChannel(msg)) user.sendNotice(msg);
 			}
 		});
 		
@@ -332,9 +329,9 @@ public final class MyBot extends PircBot
 			final void onExecute(final BotUser user, final String[] args)
 			{
 				final Date upd = mTask.getLastUpdate();
-				if (upd == null) user.sendMessage("Sorry, couldn't detect most recent update.");
-				else if (!user.sendFromChannel(user.nick + ": The last update was at " + upd.toString()))
-					user.sendMessage("The last update was at " + upd.toString());
+				if (upd == null) user.sendNoticeFromChannel("Sorry, couldn't detect most recent update.");
+				else if (!user.sendNoticeFromChannel(user.nick + ": The last update was at " + upd.toString()))
+					user.sendNotice("The last update was at " + upd.toString());
 			}
 		});
 	}
@@ -364,7 +361,7 @@ public final class MyBot extends PircBot
 			{
 				if (sender.isUserAtLeast(c.reqlvl))
 					c.onExecute(sender, parts.length > 1 ? parts[1].split(" ") : new String[0]);
-				else sender.sendMessage("Access to command denied! Required permission level: " + Perm.getName(c.reqlvl));
+				else sender.sendNotice("Access to command denied! Required permission level: " + Perm.getName(c.reqlvl));
 				return;
 			}
 		sender.sendMessage("Unknown command!");
@@ -506,7 +503,7 @@ public final class MyBot extends PircBot
 				"Le toucan has arrived.",
 				"Swiggity swooty Kristyboi is coming for that booty."
 			};
-			sendMessage(channel, Colors.DARK_GREEN + sentences[rand.nextInt(sentences.length)]);
+			sendNotice(channel, Colors.DARK_GREEN + sentences[rand.nextInt(sentences.length)]);
 		}
 	}
 
@@ -590,14 +587,35 @@ public final class MyBot extends PircBot
 		}
 		
 		/**
+		 * Sends a private notice to a user
+		 * @param msg The message
+		 */
+		public void sendNotice(String msg)
+		{
+			instance.sendNotice(nick, msg);
+		}
+		
+		/**
 		 * Sends a message to the user from the channel
 		 * @param msg The message
 		 * @return True if the channel is set and the message was sent, false otherwise
 		 */
-		public final boolean sendFromChannel(final String msg)
+		public final boolean sendMessageFromChannel(final String msg)
 		{
 			if (channel == null) return false;
 			instance.sendMessage(channel, msg);
+			return true;
+		}
+		
+		/**
+		 * Sends a notice to the user from the channel
+		 * @param msg The message
+		 * @return True if the channel is set and the message was sent, false otherwise
+		 */
+		public final boolean sendNoticeFromChannel(final String msg)
+		{
+			if (channel == null) return false;
+			instance.sendNotice(channel, msg);
 			return true;
 		}
 		
