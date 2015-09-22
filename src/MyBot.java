@@ -418,12 +418,17 @@ public final class MyBot extends PircBot
 	@Override
 	protected final void onUserMode(final String nick, final String srcNick, final String srcLogin, final String srcHost, final String mode)
 	{
-		if (mode.equals("+r"))
-		{
-			reg.add(nick);
-			voice(Config.mainChannel, nick);
-		}
-		else if (mode.equals("-r")) reg.remove(nick);
+//		if (mode.equals("+r")) //Shit's broken. Doesn't detect sometimes when Usermode changes. Same with onQuit. Just won't fire.
+//		{
+//			reg.add(nick);
+//			voice(Config.mainChannel, nick);
+//		}
+//		else if (mode.equals("-r")) reg.remove(nick);
+	}
+	
+	protected final void onJoin(String channel, String sender, String login, String hostname)
+	{
+		voice(channel,sender);
 	}
 	
 	@Override
