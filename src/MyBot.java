@@ -345,7 +345,7 @@ public final class MyBot extends PircBot
 		Config.log("Joining " + Config.mainChannel + "...");
 		joinChannel(Config.mainChannel);
 		
-		setMessageDelay(500);
+		setMessageDelay(50);
 	}
 	
 	/**
