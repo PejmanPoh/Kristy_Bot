@@ -44,12 +44,14 @@ public final class MyBot extends PircBot
 	/** A task scheduler instance */
 	public final Scheduler sched;
 	
+	/** Last users' message storage */
+	public final HashMap<String, TimedMsg> lastMsg = new HashMap<String, TimedMsg>(32);
+	
 	private GiveawayTask gTask;
 	private MonitorTask mTask;
-	private TimertestTask tTask;
 	boolean exiting;
 	
-	MyBot(final String name)
+	MyBot(final String name, final boolean usemail)
 	{
 		instance = this;
 		exiting = false;
@@ -79,7 +81,7 @@ public final class MyBot extends PircBot
 			}
 		});
 		
-		sched.addTask(mTask = new MonitorTask());
+		if (usemail) sched.addTask(mTask = new MonitorTask());
 		
 		gTask = null;
 		
@@ -234,6 +236,27 @@ public final class MyBot extends PircBot
 			}
 		});
 		
+		cmds.add(new Command("last", Perm.VOICE, "[nick]", "Shows user's last sent message")
+		{
+			@Override
+			final void onExecute(final BotUser user, final String[] args)
+			{
+				if (args.length > 0)
+				{
+					final String nick = getRealNick(args[0]);
+					final String msg;
+					if (lastMsg.containsKey(nick))
+					{
+						final TimedMsg tm = lastMsg.get(nick);
+						msg = "Last message from " + nick + " (" + Config.round((System.currentTimeMillis() - tm.time) / 60000F, 1) + " mins ago): " + tm.msg;
+					}
+					else msg = "There are no registered messages from " + nick + "!";
+					if (!user.sendMessageFromChannel(msg)) user.sendMessage(msg);
+				}
+				else sendUsageInfo(user);
+			}
+		});
+		
 		cmds.add(new Command("prefix", Perm.NONE, "[nick]", "Shows an user's full nick and prefix")
 		{
 			@Override
@@ -297,29 +320,6 @@ public final class MyBot extends PircBot
                 final GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("Europe/Dublin"));
 				final String msg = "Bot time is: " + Config.format(new Date()) + ", Kristyboi's time is: " + Config.format(gc.getTime());
 				if (!user.sendNoticeFromChannel(msg)) user.sendNotice(msg);
-			}
-		});
-		
-		cmds.add(new Command("timertest", Perm.OP, "<start [ticks]|check>", "Performs a Scheduler tick timer test")
-		{
-			@Override
-			final void onExecute(final BotUser user, final String[] args)
-			{
-				if (args.length > 1 && args[0].equals("start"))
-				{
-					try
-					{
-						final int ticks = Integer.parseInt(args[1]);
-						sched.addTask(tTask = new TimertestTask(ticks));
-						user.sendMessage("Scheduler timer test task has started for " + ticks + " ticks.");
-					}
-					catch (final NumberFormatException ex) { sendUsageInfo(user); }
-				}
-				else if (args.length > 0 && args[0].equals("check"))
-				{
-					user.sendMessage("Test results - elapsed time: " + tTask.getResult() + " millis per tick");
-				}
-				else sendUsageInfo(user);
 			}
 		});
 		
@@ -434,10 +434,10 @@ public final class MyBot extends PircBot
 	@Override
 	protected final void onUserList(final String channel, final User[] users)
 	{
-		for (final User u : users)
-		{ //A bit spammy atm. 
-//			this.sendRawLineViaQueue("STATUS " + getRealNick(u.getNick())); //Doesn't seem to recognise the commands /msg or status
-			}
+		//for (final User u : users)
+		//{
+		//	  this.sendRawLineViaQueue("STATUS " + getRealNick(u.getNick())); //Doesn't seem to recognise the commands /msg or status
+		//}
 	}
 	
 	@Override
@@ -631,6 +631,18 @@ public final class MyBot extends PircBot
 		public boolean isUserAtLeast(final int permlvl)
 		{
 			return instance.getPermLevel(nick) >= permlvl;
+		}
+	}
+	
+	public static final class TimedMsg
+	{
+		public final long time;
+		public final String msg;
+		
+		TimedMsg(final String message)
+		{
+			time = System.currentTimeMillis();
+			msg = message;
 		}
 	}
 }
