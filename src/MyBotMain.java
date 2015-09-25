@@ -15,17 +15,14 @@ public final class MyBotMain
 		}
 		
 		/**
-		 * Prints a notice to a user or channel
+		 * Prints a notice to the standard output
 		 */
 		@Override
 		public final void sendNotice(final String msg)
 		{
 			Config.log("IRC Notice: " + msg);
 		}
-		
-		/**
-		 * Console user has all permissions possible
-		 */
+
 		@Override
 		public final boolean isUserAtLeast(final int permlvl)
 		{
@@ -38,7 +35,16 @@ public final class MyBotMain
 		try
 		{
 			Config.log("Starting up the bot...");
-			final MyBot bot = new MyBot("Kristy_Bot");
+			
+			boolean mail = true;
+			for (int i = 0; i < args.length; ++i)
+				if (args[i].equals("-nomail"))
+				{
+					mail = false;
+					Config.log("Mode set: No mail");
+				}
+			
+			final MyBot bot = new MyBot("Kristy_Bot", mail);
 
 			// Enable debugging output.
 			bot.setVerbose(true);
