@@ -5,7 +5,6 @@ import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Store;
-import org.jibble.pircbot.Colors;
 
 final class MonitorTask extends Scheduler.Task
 {
@@ -58,7 +57,7 @@ final class MonitorTask extends Scheduler.Task
 						{
 							// Prevent announcments for 10 minutes
 							dontsend = 20;
-							MyBot.instance.sendMessage(Config.mainChannel, Colors.RED + "***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
+							MyBot.instance.sendNotice(Config.mainChannel,"***The Kristyboi Spreadsheet was JUST updated!*** https://goo.gl/hmQOiw");
 						}
 						msgs[i].setFlag(Flag.SEEN, true);
 

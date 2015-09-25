@@ -34,7 +34,7 @@ final class GiveawayTask extends Scheduler.Task
 		winnerHash = u.hashCode();
 		Config.log("Giveaway winner chosen: " + winner);
 		bot.sendMessage(Config.mainChannel, Colors.BOLD + Colors.RED + "CONGRATULATIONS " + Colors.NORMAL + Colors.PURPLE + u.getNick() + Colors.RED + "! You have been randomly selected to win an " + Colors.PURPLE + "AK-47 | Redline FT" + Colors.RED + "! Type \"!accept\" in the next" + Colors.BLUE + " 30 minutes" + Colors.RED + " to claim your prize or another winner will be chosen.");
-		acceptorTask = bot.sched.addTask(new Scheduler.Task("giveaway acceptor", 3600)
+		acceptorTask = bot.sched.addTask(new Scheduler.Task("giveaway acceptor", 2400)
 		{
 			@Override
 			public final void main()

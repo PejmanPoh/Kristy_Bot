@@ -418,6 +418,7 @@ public final class MyBot extends PircBot
 	@Override
 	protected final void onUserMode(final String nick, final String srcNick, final String srcLogin, final String srcHost, final String mode)
 	{
+		System.out.println("Someone changed user mode"); //this never fires
 //		if (mode.equals("+r")) //Shit's broken. Doesn't detect sometimes when Usermode changes. Same with onQuit. Just won't fire.
 //		{
 //			reg.add(nick);
