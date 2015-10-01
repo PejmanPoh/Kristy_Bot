@@ -17,7 +17,7 @@ final class MonitorTask extends Scheduler.Task
 	{
 		super("email daemon", 4);
 		final Session session = Session.getInstance(System.getProperties(), null);
-		// session.setDebug(true);
+		session.setDebug(true);
 		try
 		{
 			final Store store = session.getStore("imaps");

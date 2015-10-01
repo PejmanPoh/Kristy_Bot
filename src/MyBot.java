@@ -61,7 +61,6 @@ public final class MyBot extends PircBot
 		final String[] sentences = new String[]
 		{
 			"Remember to drink your ovaltine kids.",
-			"Remember to vote Kristy_Bot for Member of the Month!",
 			"Rage betting is for losers.",
 			"Beware the tilt.",
 			"Beware the svv@y.",
@@ -81,7 +80,7 @@ public final class MyBot extends PircBot
 			}
 		});
 		
-		if (usemail) sched.addTask(mTask = new MonitorTask());
+//		if (usemail) sched.addTask(mTask = new MonitorTask());
 		
 		gTask = null;
 		
@@ -231,8 +230,8 @@ public final class MyBot extends PircBot
 				sendNotice(user.nick, "   1. Screenshot the message that Kristy_Bot announces which has your name in it.");
 				sendNotice(user.nick, "   2. Post the screenshot in a new thread with a title like \"I won an IRC giveaway! 10/9/2015\" ");
 				sendNotice(user.nick, "   3. I will contact you and meet you in the IRC again, and you must give me your trade link. ");
-				sendNotice(user.nick, "   4. Wait for Kristyboi or myself to send you the redline.");
-				sendNotice(user.nick, "   5. Enjoy the redline!");
+				sendNotice(user.nick, "   4. Wait for me to send you the skin.");
+				sendNotice(user.nick, "   5. Enjoy the skin!");
 			}
 		});
 		
@@ -291,15 +290,6 @@ public final class MyBot extends PircBot
 			}
 		});
 		
-		cmds.add(new Command("rank", Perm.NONE, "", "Shows an arbitrary Kristyboi's rank")
-		{
-			@Override
-			final void onExecute(final BotUser user, final String[] args)
-			{
-				final String msg = "Kristyboi is currently a Supreme Analyst First Class.";
-				if (!user.sendMessageFromChannel(msg)) user.sendMessage(msg);
-			}
-		});
 		
 		cmds.add(new Command("tasks", Perm.OP, "", "Displays the current task list of the scheduler")
 		{
@@ -309,29 +299,6 @@ public final class MyBot extends PircBot
 				user.sendMessage("Current task list:");
 				for (final String line : sched.getTaskStatus().split("\n"))
 					user.sendMessage(line);
-			}
-		});
-		
-		cmds.add(new Command("time", Perm.NONE, "", "Shows the time in bot's timezone and Kristyboi's timezone")
-		{
-			@Override
-			final void onExecute(final BotUser user, final String[] args)
-			{
-                final GregorianCalendar gc = new GregorianCalendar(TimeZone.getTimeZone("Europe/Dublin"));
-				final String msg = "Bot time is: " + Config.format(new Date()) + ", Kristyboi's time is: " + Config.format(gc.getTime());
-				if (!user.sendNoticeFromChannel(msg)) user.sendNotice(msg);
-			}
-		});
-		
-		cmds.add(new Command("update", Perm.NONE, "", "Displays the time of the last spreadsheet update")
-		{
-			@Override
-			final void onExecute(final BotUser user, final String[] args)
-			{
-				final Date upd = mTask.getLastUpdate();
-				if (upd == null) user.sendNoticeFromChannel("Sorry, couldn't detect most recent update.");
-				else if (!user.sendNoticeFromChannel(user.nick + ": The last update was at " + upd.toString()))
-					user.sendNotice("The last update was at " + upd.toString());
 			}
 		});
 	}
@@ -478,6 +445,10 @@ public final class MyBot extends PircBot
 			{
 				sendMessage(channel, ":(");
 			}
+			else if (message.contains("pageman"))
+			{
+				sendMessage("ThePageMan", message);
+			}
 		}
 	}
 
@@ -493,24 +464,6 @@ public final class MyBot extends PircBot
 	protected final void onQuit(String nick, String srcLogin, String srcHost, String reason)
 	{
 		reg.remove(nick);
-	}
-	
-	@Override
-	protected final void onOp(final String channel, final String sourceNick, final String sourceLogin, final String sourceHostname, final String recipient)
-	{
-		if (getRealNick(recipient).equals("Kristyboi"))
-		{
-			final String[] sentences = new String[]
-			{
-				"ALL RISE! Kristyboi has identified himself to the channel.",
-				"Kristyboi 3 Confirmed.",
-				"ARISE! KRISTYBOI!",
-				"The lean mean meme machine Kristyboi is here.",
-				"Le toucan has arrived.",
-				"Swiggity swooty Kristyboi is coming for that booty."
-			};
-			sendNotice(channel, Colors.DARK_GREEN + sentences[rand.nextInt(sentences.length)]);
-		}
 	}
 
 	/**

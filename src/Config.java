@@ -14,7 +14,7 @@ final class Config
 	private static final Properties props = new Properties();
 	
 	/** Bot's operating channel */
-	public static final String mainChannel = "#kristyboibets";
+	public static final String mainChannel = "#rcsgobetting";
 	
 	static
 	{
